@@ -3,10 +3,31 @@
     {
       "path": "/api/cron/fetch-videos",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/transcribe-videos",
+      "schedule": "10 6 * * *"
+    },
+    {
+      "path": "/api/cron/check-transcriptions",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/analyze-mentions",
+      "schedule": "*/30 * * * *"
     }
   ],
   "functions": {
     "api/cron/fetch-videos.js": {
+      "maxDuration": 300
+    },
+    "api/cron/transcribe-videos.js": {
+      "maxDuration": 300
+    },
+    "api/cron/check-transcriptions.js": {
+      "maxDuration": 300
+    },
+    "api/cron/analyze-mentions.js": {
       "maxDuration": 300
     }
   }

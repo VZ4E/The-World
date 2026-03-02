@@ -1,0 +1,112 @@
+/**
+ * POST /api/cron/transcribe-videos
+ *
+ * Vercel cron job — runs daily at 06:10 UTC (10 min after fetch-videos).
+ *
+ * Finds all videos with transcription_status = 'pending' and submits them
+ * to AssemblyAI for transcription. The job is async — AssemblyAI processes
+ * in the background and check-transcriptions.js polls for completion.
+ *
+ * Retry logic:
+ *   - On submit failure: increment retry_count, keep status 'pending'
+ *   - After 3 failures: set status 'failed' so the video is skipped
+ */
+
+const { getSupabase } = require('../../lib/supabase')
+const { submitTranscription } = require('../../lib/assemblyai')
+
+const MAX_RETRIES = 3
+const BATCH_SIZE = 50 // max videos to submit per run
+
+module.exports = async function handler(req, res) {
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  const cronSecret = process.env.PIPELINE_CRON_SECRET
+  if (!cronSecret || req.headers.authorization !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  const supabase = getSupabase()
+  const runStarted = new Date().toISOString()
+
+  console.log(`[transcribe-videos] Pipeline started at ${runStarted}`)
+
+  // ── Load pending videos ────────────────────────────────────────────────────
+  const { data: videos, error } = await supabase
+    .from('videos')
+    .select('id, video_url, platform, title, retry_count')
+    .eq('transcription_status', 'pending')
+    .not('video_url', 'is', null)
+    .lt('retry_count', MAX_RETRIES) // skip already-maxed-out videos
+    .order('published_at', { ascending: false })
+    .limit(BATCH_SIZE)
+
+  if (error) {
+    console.error('[transcribe-videos] Failed to load pending videos:', error.message)
+    return res.status(500).json({ error: error.message })
+  }
+
+  console.log(`[transcribe-videos] Submitting ${videos.length} videos to AssemblyAI`)
+
+  const summary = {
+    run_started_at: runStarted,
+    total_pending: videos.length,
+    submitted: 0,
+    failed: 0,
+    errors: [],
+  }
+
+  // ── Submit each video ──────────────────────────────────────────────────────
+  for (const video of videos) {
+    try {
+      // Mark as 'processing' before submitting to prevent double-submission
+      // if this function is retried or runs concurrently.
+      const { error: lockError } = await supabase
+        .from('videos')
+        .update({ transcription_status: 'processing' })
+        .eq('id', video.id)
+        .eq('transcription_status', 'pending') // optimistic lock
+
+      if (lockError) throw new Error(`Lock failed: ${lockError.message}`)
+
+      // Submit to AssemblyAI
+      const transcript = await submitTranscription(video.video_url)
+
+      // Store the AssemblyAI transcript ID so check-transcriptions.js can poll it
+      const { error: updateError } = await supabase
+        .from('videos')
+        .update({ assemblyai_transcript_id: transcript.id })
+        .eq('id', video.id)
+
+      if (updateError) throw new Error(`ID save failed: ${updateError.message}`)
+
+      summary.submitted++
+      console.log(
+        `[transcribe-videos] Submitted video ${video.id} → AssemblyAI ${transcript.id}`
+      )
+    } catch (err) {
+      console.error(`[transcribe-videos] Failed to submit video ${video.id}:`, err.message)
+
+      const retryCount = (video.retry_count ?? 0) + 1
+      const newStatus = retryCount >= MAX_RETRIES ? 'failed' : 'pending'
+
+      await supabase
+        .from('videos')
+        .update({
+          transcription_status: newStatus,
+          retry_count: retryCount,
+          error_message: err.message,
+        })
+        .eq('id', video.id)
+
+      summary.failed++
+      summary.errors.push({ video_id: video.id, error: err.message })
+    }
+  }
+
+  const runFinished = new Date().toISOString()
+  summary.run_finished_at = runFinished
+
+  console.log('[transcribe-videos] Pipeline complete:', JSON.stringify(summary))
+
+  return res.status(200).json(summary)
+}

@@ -15,7 +15,8 @@
  */
 
 const { getSupabase } = require('../../lib/supabase')
-const { fetchRecentVideos } = require('../../lib/tiktok')
+const tiktok = require('../../lib/tiktok')
+const twitch = require('../../lib/twitch')
 
 const VIDEOS_PER_CREATOR = parseInt(process.env.VIDEOS_PER_CREATOR || '7', 10)
 
@@ -66,12 +67,9 @@ module.exports = async function handler(req, res) {
       let fetchedVideos = []
 
       if (creator.platform === 'tiktok') {
-        fetchedVideos = await fetchRecentVideos(creator, VIDEOS_PER_CREATOR)
+        fetchedVideos = await tiktok.fetchRecentVideos(creator, VIDEOS_PER_CREATOR)
       } else if (creator.platform === 'twitch') {
-        // Twitch fetcher is built in the next iteration
-        console.log(`${tag} Twitch fetcher not yet implemented — skipping`)
-        summary.creators_skipped++
-        continue
+        fetchedVideos = await twitch.fetchRecentVideos(creator, VIDEOS_PER_CREATOR)
       } else {
         console.warn(`${tag} Unknown platform "${creator.platform}" — skipping`)
         summary.creators_skipped++
