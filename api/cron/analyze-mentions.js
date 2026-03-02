@@ -17,6 +17,7 @@
 
 const { getSupabase } = require('../../lib/supabase')
 const { extractBrands } = require('../../lib/claude')
+const { sendMentionAlert } = require('../../lib/discord')
 
 const BATCH_SIZE = 20
 const VALID_MENTION_TYPES = new Set(['sponsored', 'organic', 'unknown'])
@@ -37,7 +38,7 @@ module.exports = async function handler(req, res) {
   // ── Load videos ready for analysis ────────────────────────────────────────
   const { data: videos, error } = await supabase
     .from('videos')
-    .select('id, transcript_text, creator_id, title, creators(handle)')
+    .select('id, transcript_text, creator_id, title, video_url, thumbnail_url, creators(name, handle, platform, avatar_url, channel_url)')
     .eq('transcription_status', 'completed')
     .eq('analysis_status', 'pending')
     .not('transcript_text', 'is', null)
@@ -62,6 +63,7 @@ module.exports = async function handler(req, res) {
   // ── Process each video ─────────────────────────────────────────────────────
   for (const video of videos) {
     const creatorHandle = video.creators?.handle ?? 'unknown'
+    const creatorInfo   = video.creators ?? { name: 'Unknown', handle: creatorHandle }
     const tag = `[video ${video.id} / @${creatorHandle}]`
 
     try {
@@ -132,6 +134,9 @@ module.exports = async function handler(req, res) {
         if (insertError) throw new Error(`Mentions insert failed: ${insertError.message}`)
 
         summary.total_mentions += mentions.length
+
+        // Fire-and-forget Discord alert for sponsored / high-confidence organic
+        sendMentionAlert(mentionRows, video, creatorInfo)
       }
 
       summary.videos_analyzed++
