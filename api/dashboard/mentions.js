@@ -1,0 +1,107 @@
+const { getSupabase } = require('../../lib/supabase')
+
+/**
+ * GET /api/dashboard/mentions
+ *
+ * Paginated, filterable list of brand mentions.
+ *
+ * Query params:
+ *   page          int     default 1
+ *   limit         int     default 25, max 100
+ *   brand         string  partial match on brand_normalized
+ *   creator_id    uuid    filter to one creator
+ *   platform      string  'tiktok' | 'twitch'
+ *   mention_type  string  'organic' | 'sponsored' | 'unknown'
+ *   sentiment     string  'positive' | 'negative' | 'neutral'
+ *   from          ISO8601 created_at >=
+ *   to            ISO8601 created_at <=
+ *
+ * Response shape:
+ * {
+ *   data: [ mention rows with creator + video join ],
+ *   meta: { page, limit, total }
+ * }
+ */
+module.exports = async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  setCorsHeaders(res)
+  if (req.method === 'OPTIONS') return res.status(204).end()
+
+  try {
+    const page  = Math.max(1, parseInt(req.query.page  || '1', 10))
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '25', 10)))
+    const from  = (page - 1) * limit
+    const to    = from + limit - 1
+
+    const sb = getSupabase()
+
+    let query = sb
+      .from('mentions')
+      .select(
+        `id,
+         brand_name,
+         brand_normalized,
+         context_snippet,
+         timestamp_seconds,
+         confidence_score,
+         mention_type,
+         sentiment,
+         is_verified,
+         is_false_positive,
+         created_at,
+         creators ( id, name, handle, platform, avatar_url ),
+         videos   ( id, title, video_url, thumbnail_url, published_at, duration_seconds, view_count )`,
+        { count: 'exact' }
+      )
+      .eq('is_false_positive', false)
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (req.query.brand) {
+      query = query.ilike('brand_normalized', `%${req.query.brand.toLowerCase().trim()}%`)
+    }
+    if (req.query.creator_id) {
+      query = query.eq('creator_id', req.query.creator_id)
+    }
+    if (req.query.platform) {
+      // filter via joined creators table
+      query = query.eq('creators.platform', req.query.platform)
+    }
+    if (req.query.mention_type) {
+      query = query.eq('mention_type', req.query.mention_type)
+    }
+    if (req.query.sentiment) {
+      query = query.eq('sentiment', req.query.sentiment)
+    }
+    if (req.query.from) {
+      query = query.gte('created_at', req.query.from)
+    }
+    if (req.query.to) {
+      query = query.lte('created_at', req.query.to)
+    }
+
+    const { data, count, error } = await query
+
+    if (error) {
+      console.error('[mentions] Supabase error:', error)
+      return res.status(500).json({ error: 'Database query failed' })
+    }
+
+    return res.status(200).json({
+      data,
+      meta: { page, limit, total: count },
+    })
+  } catch (err) {
+    console.error('[mentions] Unexpected error:', err)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+}
+
+function setCorsHeaders(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+}

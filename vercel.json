@@ -29,6 +29,21 @@
     },
     "api/cron/analyze-mentions.js": {
       "maxDuration": 300
+    },
+    "api/dashboard/stats.js": {
+      "maxDuration": 10
+    },
+    "api/dashboard/mentions.js": {
+      "maxDuration": 10
+    },
+    "api/dashboard/brands.js": {
+      "maxDuration": 10
+    },
+    "api/dashboard/creators.js": {
+      "maxDuration": 10
+    },
+    "api/dashboard/pipeline.js": {
+      "maxDuration": 10
     }
   }
 }
