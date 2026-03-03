@@ -1,4 +1,5 @@
-const { getSupabase } = require('../../lib/supabase')
+const { getSupabase }   = require('../../lib/supabase')
+const { authDashboard } = require('../../lib/auth-dashboard')
 
 /**
  * GET /api/dashboard/stats
@@ -14,12 +15,11 @@ const { getSupabase } = require('../../lib/supabase')
  * }
  */
 module.exports = async function handler(req, res) {
+  if (!authDashboard(req, res)) return
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
-
-  setCorsHeaders(res)
-  if (req.method === 'OPTIONS') return res.status(204).end()
 
   try {
     const sb = getSupabase()
@@ -94,8 +94,3 @@ module.exports = async function handler(req, res) {
   }
 }
 
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-}

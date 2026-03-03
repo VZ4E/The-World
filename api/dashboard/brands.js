@@ -1,4 +1,5 @@
-const { getSupabase } = require('../../lib/supabase')
+const { getSupabase }   = require('../../lib/supabase')
+const { authDashboard } = require('../../lib/auth-dashboard')
 
 /**
  * GET /api/dashboard/brands
@@ -30,13 +31,16 @@ const { getSupabase } = require('../../lib/supabase')
  *   ]
  * }
  */
+const VALID_MENTION_TYPES = new Set(['organic', 'sponsored', 'unknown'])
+const VALID_PLATFORMS     = new Set(['tiktok', 'twitch'])
+const ROW_CAP             = 5000  // safety cap on mentions fetched for aggregation
+
 module.exports = async function handler(req, res) {
+  if (!authDashboard(req, res)) return
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
-
-  setCorsHeaders(res)
-  if (req.method === 'OPTIONS') return res.status(204).end()
 
   try {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '20', 10)))
@@ -65,7 +69,7 @@ module.exports = async function handler(req, res) {
       )
       .eq('is_false_positive', false)
 
-    if (req.query.mention_type) {
+    if (req.query.mention_type && VALID_MENTION_TYPES.has(req.query.mention_type)) {
       query = query.eq('mention_type', req.query.mention_type)
     }
     if (req.query.from) {
@@ -75,6 +79,9 @@ module.exports = async function handler(req, res) {
       query = query.lte('created_at', req.query.to)
     }
 
+    // Safety cap: prevent fetching unbounded rows for in-JS aggregation
+    query = query.limit(ROW_CAP)
+
     const { data: rows, error } = await query
 
     if (error) {
@@ -82,8 +89,8 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Database query failed' })
     }
 
-    // Filter by platform after fetch (it's on the joined creators row)
-    const filtered = req.query.platform
+    // Filter by platform after fetch — validate enum first
+    const filtered = (req.query.platform && VALID_PLATFORMS.has(req.query.platform))
       ? rows.filter(r => r.creators?.platform === req.query.platform)
       : rows
 
@@ -131,8 +138,3 @@ module.exports = async function handler(req, res) {
   }
 }
 
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-}

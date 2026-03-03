@@ -1,4 +1,5 @@
-const { getSupabase } = require('../../lib/supabase')
+const { getSupabase }   = require('../../lib/supabase')
+const { authDashboard } = require('../../lib/auth-dashboard')
 
 /**
  * GET /api/dashboard/mentions
@@ -29,12 +30,11 @@ const VALID_PLATFORMS     = new Set(['tiktok', 'twitch'])
 const MAX_DAYS            = 365
 
 module.exports = async function handler(req, res) {
+  if (!authDashboard(req, res)) return   // handles CORS + auth; returns 401/503 on failure
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
-
-  setCorsHeaders(res)
-  if (req.method === 'OPTIONS') return res.status(204).end()
 
   try {
     const page  = Math.max(1, parseInt(req.query.page  || '1', 10))
@@ -111,8 +111,3 @@ module.exports = async function handler(req, res) {
   }
 }
 
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-}

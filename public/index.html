@@ -447,9 +447,35 @@ let mentionsTotal = 0
 let currentSection = 'overview'
 let loadedSections = new Set()
 let refreshTimer = null
+const mentionCache = new Map()  // id → mention object (XSS-safe lookup)
+
+// ─── Auth ───────────────────────────────────────────────────────────────────
+// The dashboard API requires Authorization: Bearer <DASHBOARD_API_KEY>.
+// We store the key in sessionStorage (cleared when tab closes).
+function getApiKey() {
+  return sessionStorage.getItem('rs_api_key') || ''
+}
+
+function promptApiKey() {
+  const stored = getApiKey()
+  if (stored) return true
+  const key = window.prompt('Respawn Signal — Enter your dashboard API key:')
+  if (!key || !key.trim()) return false
+  sessionStorage.setItem('rs_api_key', key.trim())
+  return true
+}
 
 // ─── Boot ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  if (!promptApiKey()) {
+    document.querySelector('main').innerHTML = `
+      <div class="flex flex-col items-center justify-center h-96 gap-4">
+        <div class="text-4xl">🔒</div>
+        <p class="text-slate-400">API key required.</p>
+        <button onclick="location.reload()" class="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm">Enter key</button>
+      </div>`
+    return
+  }
   refreshAll()
   refreshTimer = setInterval(refreshAll, 60_000)
 })
@@ -513,7 +539,15 @@ async function refreshAll() {
 
 // ─── API helper ─────────────────────────────────────────────────────────────
 async function api(path) {
-  const res = await fetch(BASE + path)
+  const key = getApiKey()
+  const res = await fetch(BASE + path, {
+    headers: key ? { Authorization: `Bearer ${key}` } : {},
+  })
+  if (res.status === 401) {
+    sessionStorage.removeItem('rs_api_key')
+    toast('API key invalid — please refresh and re-enter', 'error')
+    throw new Error('Unauthorized')
+  }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   return res.json()
 }
@@ -680,26 +714,44 @@ async function loadMentions(page = mentionsPage) {
 }
 
 function mentionRow(m, compact) {
-  const mention = JSON.stringify(m).replace(/"/g,'&quot;')
+  // Store the full object in a JS Map keyed by ID — no JSON serialised into HTML attributes (XSS fix).
+  // The click handler reads from this safe cache via data-id, never from the DOM.
+  mentionCache.set(m.id, m)
+
+  // Validate badge classes against known safe values only
+  const safeType      = ['sponsored','organic','unknown'].includes(m.mention_type) ? m.mention_type : 'unknown'
+  const safeSentiment = ['positive','negative','neutral'].includes(m.sentiment)    ? m.sentiment    : 'neutral'
+  const conf          = ((m.confidence_score || 0) * 100)
+
   return `
-  <div onclick='openDrawer(${mention})'
-    class="flex items-start gap-3 px-5 py-4 hover:bg-surface-700/50 cursor-pointer transition-colors group animate-fade-up">
+  <div data-mention-id="${esc(m.id)}" role="button" tabindex="0"
+    class="mention-row flex items-start gap-3 px-5 py-4 hover:bg-surface-700/50 cursor-pointer transition-colors group animate-fade-up">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 flex-wrap mb-0.5">
         <span class="font-semibold text-white text-sm">${esc(m.brand_name)}</span>
-        <span class="text-xs px-1.5 py-0.5 rounded-full font-medium badge-${m.mention_type}">${m.mention_type}</span>
-        <span class="text-xs px-1.5 py-0.5 rounded-full badge-${m.sentiment}">${m.sentiment}</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full font-medium badge-${safeType}">${esc(safeType)}</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full badge-${safeSentiment}">${esc(safeSentiment)}</span>
         ${platformBadge(m.creators?.platform)}
       </div>
       <p class="text-xs text-slate-400 truncate">${esc(m.context_snippet || '—')}</p>
       <p class="text-xs text-slate-600 mt-0.5">${esc(m.creators?.name || '')} · ${relTime(m.created_at)}</p>
     </div>
     <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
-      <span class="text-xs text-slate-500 font-mono">${((m.confidence_score||0)*100).toFixed(0)}%</span>
-      <div class="conf-track w-14"><div class="conf-fill" style="width:${((m.confidence_score||0)*100)}%"></div></div>
+      <span class="text-xs text-slate-500 font-mono">${conf.toFixed(0)}%</span>
+      <div class="conf-track w-14"><div class="conf-fill" style="width:${conf}%"></div></div>
     </div>
   </div>`
 }
+
+// Event delegation — one listener on the document handles all mention row clicks (XSS-safe)
+document.addEventListener('click', (e) => {
+  const row = e.target.closest('.mention-row')
+  if (!row) return
+  const id = row.dataset.mentionId
+  if (!id) return
+  const m = mentionCache.get(id)
+  if (m) openDrawer(m)
+})
 
 function clearFilters() {
   ['filter-brand','filter-type','filter-sentiment','filter-platform','filter-days'].forEach(id => {

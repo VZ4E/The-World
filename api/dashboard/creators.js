@@ -1,4 +1,5 @@
-const { getSupabase } = require('../../lib/supabase')
+const { getSupabase }   = require('../../lib/supabase')
+const { authDashboard } = require('../../lib/auth-dashboard')
 
 /**
  * GET /api/dashboard/creators
@@ -27,13 +28,15 @@ const { getSupabase } = require('../../lib/supabase')
  *   ]
  * }
  */
+const VALID_PLATFORMS = new Set(['tiktok', 'twitch'])
+const MENTIONS_ROW_CAP = 10000  // safety cap on in-memory aggregation
+
 module.exports = async function handler(req, res) {
+  if (!authDashboard(req, res)) return
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
-
-  setCorsHeaders(res)
-  if (req.method === 'OPTIONS') return res.status(204).end()
 
   try {
     const sb = getSupabase()
@@ -44,7 +47,7 @@ module.exports = async function handler(req, res) {
       .select('id, name, handle, platform, avatar_url, channel_url, follower_count, subscriber_count, is_active, last_fetched_at')
       .order('name', { ascending: true })
 
-    if (req.query.platform) {
+    if (req.query.platform && VALID_PLATFORMS.has(req.query.platform)) {
       creatorsQuery = creatorsQuery.eq('platform', req.query.platform)
     }
     if (req.query.active === '1' || req.query.active === 'true') {
@@ -75,12 +78,13 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Database query failed' })
     }
 
-    // 3. Fetch mention counts per creator
+    // 3. Fetch mention counts per creator — cap rows for safety
     const { data: mentionRows, error: mentionsErr } = await sb
       .from('mentions')
       .select('creator_id, mention_type, brand_normalized')
       .in('creator_id', creatorIds)
       .eq('is_false_positive', false)
+      .limit(MENTIONS_ROW_CAP)
 
     if (mentionsErr) {
       console.error('[creators] Supabase error (mentions):', mentionsErr)
@@ -142,8 +146,3 @@ function buildMentionStats(rows) {
   return map
 }
 
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-}
