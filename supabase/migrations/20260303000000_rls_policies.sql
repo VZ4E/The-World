@@ -1,5 +1,5 @@
 -- =============================================================================
--- Respawn Signal — RLS Policies
+-- Project Signal — RLS Policies
 -- Adds read access for the anon/authenticated roles used by the dashboard.
 --
 -- The pipeline runs with service_role (bypasses RLS).

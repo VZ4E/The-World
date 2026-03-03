@@ -1,5 +1,5 @@
 -- =============================================================================
--- Respawn Signal — Initial Schema
+-- Project Signal — Initial Schema
 -- Tables: creators, videos, mentions
 -- =============================================================================
 

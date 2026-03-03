@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Respawn Signal — Creator Seeding Script
+ * Project Signal — Creator Seeding Script
  *
  * Upserts real creator records into the database.
  * Run this once before your first pipeline run.
@@ -85,7 +85,7 @@ const CREATORS = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(`\nRespawn Signal — Creator Seeder`)
+  console.log(`\nProject Signal — Creator Seeder`)
   console.log(`Upserting ${CREATORS.length} creator(s)...\n`)
 
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {

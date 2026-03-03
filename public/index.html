@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Respawn Signal — Brand Intelligence</title>
+  <meta name="description" content="Project Signal — Real-time brand mention intelligence for gaming creators on TikTok and Twitch." />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Project Signal — Brand Intelligence</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -146,15 +148,47 @@
 <!-- ─── Toast Container ─────────────────────────────── -->
 <div id="toast-container"></div>
 
+<!-- ─── Login Overlay ────────────────────────────────── -->
+<div id="login-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-surface-950/95 backdrop-blur-sm">
+  <div class="w-full max-w-sm mx-4 animate-fade-up">
+    <div class="bg-surface-800 border border-surface-600 rounded-2xl p-8 shadow-2xl">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center text-white font-bold text-sm shrink-0">PS</div>
+        <div>
+          <div class="text-white font-semibold text-base leading-tight">Project Signal</div>
+          <div class="text-slate-500 text-xs">Brand Intelligence Platform</div>
+        </div>
+      </div>
+      <h2 class="text-white font-semibold text-lg mb-1">Welcome back</h2>
+      <p class="text-slate-400 text-sm mb-6">Enter your dashboard API key to continue.</p>
+      <div class="space-y-3">
+        <div class="relative">
+          <input id="login-key-input" type="password"
+            placeholder="API key"
+            class="w-full bg-surface-700 border border-surface-500 text-white placeholder-slate-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/30 transition-all font-mono"
+            autocomplete="current-password"
+          />
+        </div>
+        <button id="login-submit-btn"
+          onclick="submitLoginKey()"
+          class="w-full bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm py-3 px-4 rounded-xl transition-colors">
+          Access Dashboard
+        </button>
+      </div>
+      <p id="login-error" class="hidden text-red-400 text-xs mt-3 text-center">Invalid key — please try again.</p>
+    </div>
+  </div>
+</div>
+
 <!-- ─── Layout ─────────────────────────────────────── -->
 <div class="flex min-h-screen">
 
   <!-- Sidebar nav (desktop) -->
   <aside id="sidebar" class="hidden lg:flex flex-col bg-surface-800 border-r border-surface-600 sticky top-0 h-screen py-4 px-3">
     <div class="flex items-center gap-2.5 px-2 mb-6">
-      <div class="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-sm shrink-0">R</div>
+      <div class="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-sm shrink-0">PS</div>
       <div>
-        <div class="text-white font-semibold text-sm leading-tight">Respawn Signal</div>
+        <div class="text-white font-semibold text-sm leading-tight">Project Signal</div>
         <div class="text-slate-500 text-xs">Brand Intelligence</div>
       </div>
     </div>
@@ -198,8 +232,8 @@
     <header class="sticky top-0 z-30 bg-surface-800/90 backdrop-blur border-b border-surface-600">
       <div class="flex items-center justify-between h-14 px-4 sm:px-6">
         <div class="flex items-center gap-3 lg:hidden">
-          <div class="w-7 h-7 rounded-md bg-brand-500 flex items-center justify-center text-white font-bold text-sm">R</div>
-          <span class="font-semibold text-white text-sm">Respawn Signal</span>
+          <div class="w-7 h-7 rounded-md bg-brand-500 flex items-center justify-center text-white font-bold text-sm">PS</div>
+          <span class="font-semibold text-white text-sm">Project Signal</span>
         </div>
 
         <!-- Mobile nav pills -->
@@ -453,31 +487,69 @@ const mentionCache = new Map()  // id → mention object (XSS-safe lookup)
 // The dashboard API requires Authorization: Bearer <DASHBOARD_API_KEY>.
 // We store the key in sessionStorage (cleared when tab closes).
 function getApiKey() {
-  return sessionStorage.getItem('rs_api_key') || ''
+  return sessionStorage.getItem('ps_api_key') || ''
 }
 
-function promptApiKey() {
-  const stored = getApiKey()
-  if (stored) return true
-  const key = window.prompt('Respawn Signal — Enter your dashboard API key:')
-  if (!key || !key.trim()) return false
-  sessionStorage.setItem('rs_api_key', key.trim())
-  return true
+function showLoginOverlay() {
+  const overlay = document.getElementById('login-overlay')
+  overlay.classList.remove('hidden')
+  setTimeout(() => document.getElementById('login-key-input')?.focus(), 50)
+
+  // Submit on Enter key
+  document.getElementById('login-key-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitLoginKey()
+  })
+}
+
+function hideLoginOverlay() {
+  document.getElementById('login-overlay').classList.add('hidden')
+}
+
+function submitLoginKey() {
+  const input = document.getElementById('login-key-input')
+  const key = input.value.trim()
+  if (!key) return
+
+  const btn = document.getElementById('login-submit-btn')
+  btn.disabled = true
+  btn.textContent = 'Verifying...'
+
+  sessionStorage.setItem('ps_api_key', key)
+
+  // Validate key against the API — if it fails, show error
+  fetch(BASE + '/api/dashboard/stats', {
+    headers: { Authorization: `Bearer ${key}` },
+  }).then(res => {
+    if (res.status === 401) {
+      sessionStorage.removeItem('ps_api_key')
+      document.getElementById('login-error').classList.remove('hidden')
+      input.value = ''
+      input.focus()
+      btn.disabled = false
+      btn.textContent = 'Access Dashboard'
+    } else {
+      hideLoginOverlay()
+      bootDashboard()
+    }
+  }).catch(() => {
+    // Network error — allow through and let the dashboard handle errors
+    hideLoginOverlay()
+    bootDashboard()
+  })
+}
+
+function bootDashboard() {
+  refreshAll()
+  refreshTimer = setInterval(refreshAll, 60_000)
 }
 
 // ─── Boot ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  if (!promptApiKey()) {
-    document.querySelector('main').innerHTML = `
-      <div class="flex flex-col items-center justify-center h-96 gap-4">
-        <div class="text-4xl">🔒</div>
-        <p class="text-slate-400">API key required.</p>
-        <button onclick="location.reload()" class="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm">Enter key</button>
-      </div>`
-    return
+  if (getApiKey()) {
+    bootDashboard()
+  } else {
+    showLoginOverlay()
   }
-  refreshAll()
-  refreshTimer = setInterval(refreshAll, 60_000)
 })
 
 // ─── Navigation ─────────────────────────────────────────────────────────────
@@ -544,8 +616,10 @@ async function api(path) {
     headers: key ? { Authorization: `Bearer ${key}` } : {},
   })
   if (res.status === 401) {
-    sessionStorage.removeItem('rs_api_key')
-    toast('API key invalid — please refresh and re-enter', 'error')
+    sessionStorage.removeItem('ps_api_key')
+    clearInterval(refreshTimer)
+    toast('Session expired — please re-enter your API key', 'error')
+    showLoginOverlay()
     throw new Error('Unauthorized')
   }
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -809,7 +883,7 @@ async function exportMentions() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `respawn-signal-mentions-${new Date().toISOString().slice(0,10)}.csv`
+    a.download = `project-signal-mentions-${new Date().toISOString().slice(0,10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
     toast(`Exported ${data.length} mentions`, 'success')
