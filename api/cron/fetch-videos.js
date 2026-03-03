@@ -14,9 +14,15 @@
  * See: https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs
  */
 
-const { getSupabase } = require('../../lib/supabase')
-const tiktok = require('../../lib/tiktok')
-const twitch = require('../../lib/twitch')
+const { getSupabase }    = require('../../lib/supabase')
+const tiktokResearch     = require('../../lib/tiktok')
+const tiktokRapidApi     = require('../../lib/tiktok-rapidapi')
+const twitch             = require('../../lib/twitch')
+
+// Auto-select TikTok fetcher:
+//   RAPIDAPI_TIKTOK_KEY set → use RapidAPI (no partner approval needed)
+//   Otherwise              → use TikTok Research API (requires partner access)
+const tiktok = process.env.RAPIDAPI_TIKTOK_KEY ? tiktokRapidApi : tiktokResearch
 
 const VIDEOS_PER_CREATOR = parseInt(process.env.VIDEOS_PER_CREATOR || '7', 10)
 

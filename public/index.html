@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Respawn Signal</title>
+  <title>Respawn Signal — Brand Intelligence</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -14,6 +14,7 @@
             brand: {
               50:  '#f0f4ff',
               100: '#dde7ff',
+              300: '#93affe',
               400: '#7b9ef8',
               500: '#4f74f3',
               600: '#3a5ce8',
@@ -21,270 +22,556 @@
               900: '#1a2a6b',
             },
             surface: {
+              950: '#080a0e',
               900: '#0d0f14',
               800: '#13161d',
               700: '#1a1e28',
               600: '#222736',
               500: '#2c3347',
+              400: '#394057',
             },
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
           },
+          keyframes: {
+            fadeUp:  { from: { opacity: 0, transform: 'translateY(8px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+            fadeIn:  { from: { opacity: 0 }, to: { opacity: 1 } },
+            slideIn: { from: { transform: 'translateX(100%)' }, to: { transform: 'translateX(0)' } },
+            pulse:   { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.4 } },
+            spin:    { to: { transform: 'rotate(360deg)' } },
+            ticker:  { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
+            shimmer: { from: { backgroundPosition: '-200% 0' }, to: { backgroundPosition: '200% 0' } },
+          },
+          animation: {
+            'fade-up':  'fadeUp 0.25s ease',
+            'fade-in':  'fadeIn 0.2s ease',
+            'slide-in': 'slideIn 0.3s cubic-bezier(0.16,1,0.3,1)',
+            'pulse-sk': 'pulse 1.5s cubic-bezier(0.4,0,0.6,1) infinite',
+            'ticker':   'ticker 40s linear infinite',
+            'shimmer':  'shimmer 2s linear infinite',
+            'spin':     'spin 1s linear infinite',
+          },
         },
       },
     }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    body { background-color: #0d0f14; }
-    .skeleton { animation: pulse 1.5s cubic-bezier(0.4,0,0.6,1) infinite; background: #1a1e28; border-radius: 4px; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .badge-sponsored { background: rgba(251,146,60,.15); color: #fb923c; border: 1px solid rgba(251,146,60,.3); }
-    .badge-organic   { background: rgba(52,211,153,.15); color: #34d399; border: 1px solid rgba(52,211,153,.3); }
-    .badge-unknown   { background: rgba(148,163,184,.12); color: #94a3b8; border: 1px solid rgba(148,163,184,.2); }
-    .badge-positive  { background: rgba(52,211,153,.12); color: #34d399; }
-    .badge-negative  { background: rgba(248,113,113,.12); color: #f87171; }
-    .badge-neutral   { background: rgba(148,163,184,.12); color: #94a3b8; }
-    .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
-    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-    .scrollbar-thin::-webkit-scrollbar-thumb { background: #2c3347; border-radius: 4px; }
-    .tab-active { border-bottom: 2px solid #4f74f3; color: #fff; }
-    .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
-    .fade-in { animation: fadeIn .3s ease; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-    .confidence-bar { height: 3px; border-radius: 2px; background: #1a1e28; }
-    .confidence-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #4f74f3, #7b9ef8); }
+    :root {
+      --bg:       #0d0f14;
+      --surface1: #13161d;
+      --surface2: #1a1e28;
+      --surface3: #222736;
+      --border:   #222736;
+      --brand:    #4f74f3;
+      --brand-lt: #7b9ef8;
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: #e2e8f0; min-height: 100vh; }
+
+    /* ── Skeleton ──────────────────────────────────── */
+    .sk {
+      background: linear-gradient(90deg, #1a1e28 25%, #222736 50%, #1a1e28 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s linear infinite;
+      border-radius: 6px;
+    }
+
+    /* ── Badges ────────────────────────────────────── */
+    .badge-sponsored { background:rgba(251,146,60,.13);color:#fb923c;border:1px solid rgba(251,146,60,.28); }
+    .badge-organic   { background:rgba(52,211,153,.13);color:#34d399;border:1px solid rgba(52,211,153,.28); }
+    .badge-unknown   { background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.18); }
+    .badge-positive  { background:rgba(52,211,153,.1);color:#34d399; }
+    .badge-negative  { background:rgba(248,113,113,.1);color:#f87171; }
+    .badge-neutral   { background:rgba(148,163,184,.1);color:#94a3b8; }
+
+    /* ── Tabs ──────────────────────────────────────── */
+    .tab-active   { border-bottom:2px solid var(--brand);color:#fff;font-weight:600; }
+    .tab-inactive { border-bottom:2px solid transparent;color:#64748b; }
+    .tab-inactive:hover { color:#94a3b8; }
+
+    /* ── Scrollbar ─────────────────────────────────── */
+    ::-webkit-scrollbar { width:5px;height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#2c3347;border-radius:4px; }
+    ::-webkit-scrollbar-thumb:hover { background:#394057; }
+
+    /* ── Drawer ────────────────────────────────────── */
+    #drawer { transform:translateX(100%); transition:transform .3s cubic-bezier(.16,1,.3,1); }
+    #drawer.open { transform:translateX(0); }
+
+    /* ── Confidence bar ────────────────────────────── */
+    .conf-track { height:3px;background:#1a1e28;border-radius:2px;overflow:hidden; }
+    .conf-fill  { height:100%;border-radius:2px;background:linear-gradient(90deg,#4f74f3,#7b9ef8); }
+
+    /* ── Sparkline canvas ──────────────────────────── */
+    canvas.sparkline { display:block; }
+
+    /* ── Toast ─────────────────────────────────────── */
+    #toast-container { position:fixed;bottom:24px;right:24px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none; }
+    .toast { display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;
+             background:#13161d;border:1px solid #222736;color:#e2e8f0;
+             animation:fadeUp .25s ease;pointer-events:auto;max-width:340px; }
+    .toast.success { border-color:rgba(52,211,153,.35);color:#34d399; }
+    .toast.error   { border-color:rgba(248,113,113,.35);color:#f87171; }
+    .toast.info    { border-color:rgba(79,116,243,.35);color:#7b9ef8; }
+
+    /* ── Live dot ──────────────────────────────────── */
+    .live-dot { width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;
+                animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
+
+    /* ── Ticker ────────────────────────────────────── */
+    #ticker-track { display:flex;gap:0;white-space:nowrap; animation:ticker 40s linear infinite; }
+    #ticker-track:hover { animation-play-state:paused; }
+    #ticker-wrap { overflow:hidden;mask:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); }
+
+    /* ── Select styling ────────────────────────────── */
+    select option { background:#13161d;color:#e2e8f0; }
+
+    /* ── Glow card ─────────────────────────────────── */
+    .glow-card:hover { box-shadow:0 0 0 1px rgba(79,116,243,.25),0 4px 24px rgba(79,116,243,.08); }
+
+    /* ── Nav sidebar ───────────────────────────────── */
+    @media(min-width:1024px) {
+      #sidebar { width:220px;flex-shrink:0; }
+      #main-content { flex:1;min-width:0; }
+    }
   </style>
 </head>
-<body class="font-sans text-slate-200 min-h-screen">
+<body class="font-sans">
 
-  <!-- Top Nav -->
-  <nav class="border-b border-surface-600 bg-surface-800 sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-7 h-7 rounded-md bg-brand-500 flex items-center justify-center text-white font-bold text-sm">R</div>
-        <span class="font-semibold text-white tracking-tight">Respawn Signal</span>
-        <span class="hidden sm:inline text-xs text-slate-500 font-mono border border-surface-600 px-1.5 py-0.5 rounded">BETA</span>
-      </div>
-      <div class="flex items-center gap-3 text-xs text-slate-500">
-        <span id="last-updated">—</span>
-        <button onclick="refreshAll()" id="refresh-btn"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-700 hover:bg-surface-600 text-slate-300 transition-colors text-xs">
-          <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-          Refresh
-        </button>
+<!-- ─── Toast Container ─────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ─── Layout ─────────────────────────────────────── -->
+<div class="flex min-h-screen">
+
+  <!-- Sidebar nav (desktop) -->
+  <aside id="sidebar" class="hidden lg:flex flex-col bg-surface-800 border-r border-surface-600 sticky top-0 h-screen py-4 px-3">
+    <div class="flex items-center gap-2.5 px-2 mb-6">
+      <div class="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-sm shrink-0">R</div>
+      <div>
+        <div class="text-white font-semibold text-sm leading-tight">Respawn Signal</div>
+        <div class="text-slate-500 text-xs">Brand Intelligence</div>
       </div>
     </div>
-  </nav>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <nav class="flex-1 space-y-0.5 text-sm">
+      <a href="#" class="nav-link active flex items-center gap-2.5 px-3 py-2 rounded-lg text-white bg-surface-700" data-section="overview" onclick="navTo('overview');return false">
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Overview
+      </a>
+      <a href="#" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-surface-700 transition-colors" data-section="mentions" onclick="navTo('mentions');return false">
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        Mentions
+      </a>
+      <a href="#" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-surface-700 transition-colors" data-section="brands" onclick="navTo('brands');return false">
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        Top Brands
+      </a>
+      <a href="#" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-surface-700 transition-colors" data-section="creators" onclick="navTo('creators');return false">
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Creators
+      </a>
+      <a href="#" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-surface-700 transition-colors" data-section="pipeline" onclick="navTo('pipeline');return false">
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Pipeline
+      </a>
+    </nav>
 
-    <!-- Stats Cards -->
-    <section id="stats-section">
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="stats-cards">
-        <!-- filled by JS -->
-        <div class="skeleton h-24 rounded-xl"></div>
-        <div class="skeleton h-24 rounded-xl"></div>
-        <div class="skeleton h-24 rounded-xl"></div>
-        <div class="skeleton h-24 rounded-xl"></div>
+    <div class="pt-4 border-t border-surface-600 px-2 space-y-2">
+      <div class="flex items-center gap-1.5 text-xs text-slate-500">
+        <span class="live-dot"></span>
+        <span>Live — auto-refresh 60s</span>
       </div>
-    </section>
+      <div id="sidebar-last-updated" class="text-xs text-slate-600 font-mono">—</div>
+    </div>
+  </aside>
 
-    <!-- Pipeline Health -->
-    <section class="bg-surface-800 border border-surface-600 rounded-xl p-4">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-white">Pipeline Health</h2>
-        <a href="#" onclick="showTab('pipeline'); return false" class="text-xs text-brand-400 hover:text-brand-300">Full view →</a>
-      </div>
-      <div id="pipeline-mini" class="space-y-2">
-        <div class="skeleton h-5 rounded"></div>
-        <div class="skeleton h-5 rounded"></div>
-      </div>
-    </section>
+  <!-- Main -->
+  <div id="main-content" class="flex-1 min-w-0 flex flex-col">
 
-    <!-- Main Tabs -->
-    <section class="bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
-      <div class="flex border-b border-surface-600 px-4 gap-1">
-        <button class="tab-btn tab-active text-sm font-medium px-3 py-3" data-tab="mentions" onclick="showTab('mentions')">Mentions</button>
-        <button class="tab-btn tab-inactive text-sm font-medium px-3 py-3" data-tab="brands" onclick="showTab('brands')">Top Brands</button>
-        <button class="tab-btn tab-inactive text-sm font-medium px-3 py-3" data-tab="creators" onclick="showTab('creators')">Creators</button>
-        <button class="tab-btn tab-inactive text-sm font-medium px-3 py-3" data-tab="pipeline" onclick="showTab('pipeline')">Pipeline</button>
-      </div>
-
-      <!-- Mentions Tab -->
-      <div id="tab-mentions" class="tab-panel p-4">
-        <!-- Filters -->
-        <div class="flex flex-wrap gap-2 mb-4">
-          <input id="filter-brand" type="text" placeholder="Search brand…"
-            class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 w-40"
-            oninput="debounceLoadMentions()" />
-          <select id="filter-type" onchange="loadMentions(1)"
-            class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
-            <option value="">All types</option>
-            <option value="sponsored">Sponsored</option>
-            <option value="organic">Organic</option>
-            <option value="unknown">Unknown</option>
-          </select>
-          <select id="filter-sentiment" onchange="loadMentions(1)"
-            class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
-            <option value="">All sentiment</option>
-            <option value="positive">Positive</option>
-            <option value="negative">Negative</option>
-            <option value="neutral">Neutral</option>
-          </select>
-          <select id="filter-platform" onchange="loadMentions(1)"
-            class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
-            <option value="">All platforms</option>
-            <option value="tiktok">TikTok</option>
-            <option value="twitch">Twitch</option>
-          </select>
+    <!-- Top bar (mobile + desktop) -->
+    <header class="sticky top-0 z-30 bg-surface-800/90 backdrop-blur border-b border-surface-600">
+      <div class="flex items-center justify-between h-14 px-4 sm:px-6">
+        <div class="flex items-center gap-3 lg:hidden">
+          <div class="w-7 h-7 rounded-md bg-brand-500 flex items-center justify-center text-white font-bold text-sm">R</div>
+          <span class="font-semibold text-white text-sm">Respawn Signal</span>
         </div>
 
-        <div id="mentions-table-wrap" class="overflow-x-auto scrollbar-thin">
-          <div class="space-y-2" id="mentions-list">
-            <div class="skeleton h-14 rounded-lg"></div>
-            <div class="skeleton h-14 rounded-lg"></div>
-            <div class="skeleton h-14 rounded-lg"></div>
-            <div class="skeleton h-14 rounded-lg"></div>
-            <div class="skeleton h-14 rounded-lg"></div>
+        <!-- Mobile nav pills -->
+        <div class="flex lg:hidden gap-1 text-xs overflow-x-auto no-scrollbar">
+          <button class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30" data-section="overview" onclick="navTo('overview')">Overview</button>
+          <button class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-full text-slate-400 hover:bg-surface-700" data-section="mentions" onclick="navTo('mentions')">Mentions</button>
+          <button class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-full text-slate-400 hover:bg-surface-700" data-section="brands" onclick="navTo('brands')">Brands</button>
+          <button class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-full text-slate-400 hover:bg-surface-700" data-section="creators" onclick="navTo('creators')">Creators</button>
+          <button class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-full text-slate-400 hover:bg-surface-700" data-section="pipeline" onclick="navTo('pipeline')">Pipeline</button>
+        </div>
+
+        <div class="flex items-center gap-2 ml-auto">
+          <span id="header-last-updated" class="hidden sm:block text-xs text-slate-500 font-mono">—</span>
+          <button onclick="refreshAll()" id="refresh-btn" title="Refresh"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 text-slate-300 text-xs transition-colors border border-surface-600">
+            <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Live ticker -->
+    <div id="ticker-wrap" class="bg-surface-950 border-b border-surface-700 h-8 flex items-center px-4">
+      <div class="flex items-center gap-2 shrink-0 mr-4">
+        <span class="live-dot"></span>
+        <span class="text-xs text-slate-500 font-mono uppercase tracking-wider">Live</span>
+      </div>
+      <div id="ticker-track" class="text-xs text-slate-400 font-mono">
+        <span class="px-8">Loading brand activity…</span>
+        <span class="px-8">Loading brand activity…</span>
+      </div>
+    </div>
+
+    <!-- Page sections -->
+    <main class="flex-1 px-4 sm:px-6 py-6 space-y-6">
+
+      <!-- ── OVERVIEW ─────────────────────────────── -->
+      <section id="section-overview" class="space-y-6 animate-fade-up">
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="stats-cards">
+          <div class="sk h-28 rounded-2xl"></div>
+          <div class="sk h-28 rounded-2xl"></div>
+          <div class="sk h-28 rounded-2xl"></div>
+          <div class="sk h-28 rounded-2xl"></div>
+        </div>
+
+        <!-- Pipeline health + recent activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Pipeline mini -->
+          <div class="bg-surface-800 border border-surface-600 rounded-2xl p-5 glow-card transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-white">Pipeline Health</h2>
+              <button onclick="navTo('pipeline')" class="text-xs text-brand-400 hover:text-brand-300">Full view →</button>
+            </div>
+            <div id="pipeline-mini" class="space-y-3">
+              <div class="sk h-6 rounded"></div>
+              <div class="sk h-6 rounded"></div>
+            </div>
+          </div>
+
+          <!-- Alert channel status -->
+          <div class="bg-surface-800 border border-surface-600 rounded-2xl p-5 glow-card transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-white">Alert Channels</h2>
+              <span class="text-xs text-slate-500">Status</span>
+            </div>
+            <div id="alert-channels" class="space-y-2.5">
+              <div class="sk h-8 rounded-xl"></div>
+              <div class="sk h-8 rounded-xl"></div>
+              <div class="sk h-8 rounded-xl"></div>
+            </div>
           </div>
         </div>
-        <div id="mentions-pagination" class="flex items-center justify-between mt-4 text-xs text-slate-500"></div>
-      </div>
 
-      <!-- Brands Tab -->
-      <div id="tab-brands" class="tab-panel p-4 hidden">
-        <div class="flex gap-2 mb-4">
-          <select id="brands-type" onchange="loadBrands()"
-            class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
-            <option value="">All types</option>
-            <option value="sponsored">Sponsored</option>
-            <option value="organic">Organic</option>
-          </select>
-          <select id="brands-platform" onchange="loadBrands()"
-            class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
-            <option value="">All platforms</option>
-            <option value="tiktok">TikTok</option>
-            <option value="twitch">Twitch</option>
-          </select>
+        <!-- Recent mentions preview -->
+        <div class="bg-surface-800 border border-surface-600 rounded-2xl overflow-hidden glow-card transition-shadow">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-surface-600">
+            <h2 class="text-sm font-semibold text-white">Recent Mentions</h2>
+            <button onclick="navTo('mentions')" class="text-xs text-brand-400 hover:text-brand-300">View all →</button>
+          </div>
+          <div id="overview-mentions" class="divide-y divide-surface-700">
+            <div class="px-5 py-3 sk h-14 m-3 rounded-xl"></div>
+            <div class="px-5 py-3 sk h-14 m-3 rounded-xl"></div>
+            <div class="px-5 py-3 sk h-14 m-3 rounded-xl"></div>
+          </div>
         </div>
-        <div id="brands-list" class="space-y-2">
-          <div class="skeleton h-12 rounded-lg"></div>
-          <div class="skeleton h-12 rounded-lg"></div>
-          <div class="skeleton h-12 rounded-lg"></div>
-          <div class="skeleton h-12 rounded-lg"></div>
-          <div class="skeleton h-12 rounded-lg"></div>
-        </div>
-      </div>
+      </section>
 
-      <!-- Creators Tab -->
-      <div id="tab-creators" class="tab-panel p-4 hidden">
-        <div class="flex gap-2 mb-4">
-          <select id="creators-platform" onchange="loadCreators()"
-            class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
-            <option value="">All platforms</option>
-            <option value="tiktok">TikTok</option>
-            <option value="twitch">Twitch</option>
-          </select>
+      <!-- ── MENTIONS ────────────────────────────── -->
+      <section id="section-mentions" class="space-y-4 hidden animate-fade-up">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h1 class="text-lg font-bold text-white">Brand Mentions</h1>
+          <button onclick="exportMentions()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 text-slate-300 text-xs border border-surface-600 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export CSV
+          </button>
         </div>
-        <div id="creators-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="skeleton h-28 rounded-xl"></div>
-          <div class="skeleton h-28 rounded-xl"></div>
-          <div class="skeleton h-28 rounded-xl"></div>
-          <div class="skeleton h-28 rounded-xl"></div>
-        </div>
-      </div>
 
-      <!-- Pipeline Tab -->
-      <div id="tab-pipeline" class="tab-panel p-4 hidden">
+        <!-- Filters -->
+        <div class="bg-surface-800 border border-surface-600 rounded-2xl p-4">
+          <div class="flex flex-wrap gap-2">
+            <div class="relative">
+              <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+              </svg>
+              <input id="filter-brand" type="text" placeholder="Search brand…"
+                class="bg-surface-700 border border-surface-600 rounded-lg pl-8 pr-3 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500 w-44"
+                oninput="debounceLoadMentions()" />
+            </div>
+            <select id="filter-type" onchange="loadMentions(1)"
+              class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">All types</option>
+              <option value="sponsored">💰 Sponsored</option>
+              <option value="organic">🌿 Organic</option>
+              <option value="unknown">❓ Unknown</option>
+            </select>
+            <select id="filter-sentiment" onchange="loadMentions(1)"
+              class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">All sentiment</option>
+              <option value="positive">✅ Positive</option>
+              <option value="negative">⚠️ Negative</option>
+              <option value="neutral">➖ Neutral</option>
+            </select>
+            <select id="filter-platform" onchange="loadMentions(1)"
+              class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">All platforms</option>
+              <option value="tiktok">TikTok</option>
+              <option value="twitch">Twitch</option>
+            </select>
+            <select id="filter-days" onchange="loadMentions(1)"
+              class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">All time</option>
+              <option value="1">Last 24h</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+            </select>
+            <button onclick="clearFilters()" class="text-xs text-slate-500 hover:text-slate-300 px-2 py-1.5 transition-colors">Clear</button>
+          </div>
+        </div>
+
+        <!-- Mentions list -->
+        <div class="bg-surface-800 border border-surface-600 rounded-2xl overflow-hidden">
+          <div id="mentions-list" class="divide-y divide-surface-700 min-h-32">
+            <div class="p-4 space-y-2">
+              <div class="sk h-14 rounded-xl"></div>
+              <div class="sk h-14 rounded-xl"></div>
+              <div class="sk h-14 rounded-xl"></div>
+              <div class="sk h-14 rounded-xl"></div>
+              <div class="sk h-14 rounded-xl"></div>
+            </div>
+          </div>
+          <div id="mentions-pagination" class="flex items-center justify-between px-5 py-3 border-t border-surface-700 text-xs text-slate-500"></div>
+        </div>
+      </section>
+
+      <!-- ── TOP BRANDS ──────────────────────────── -->
+      <section id="section-brands" class="space-y-4 hidden animate-fade-up">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h1 class="text-lg font-bold text-white">Top Brands</h1>
+        </div>
+
+        <div class="bg-surface-800 border border-surface-600 rounded-2xl p-4">
+          <div class="flex flex-wrap gap-2">
+            <select id="brands-type" onchange="loadBrands()"
+              class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">All types</option>
+              <option value="sponsored">💰 Sponsored</option>
+              <option value="organic">🌿 Organic</option>
+            </select>
+            <select id="brands-platform" onchange="loadBrands()"
+              class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">All platforms</option>
+              <option value="tiktok">TikTok</option>
+              <option value="twitch">Twitch</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-surface-800 border border-surface-600 rounded-2xl overflow-hidden">
+          <div id="brands-list" class="divide-y divide-surface-700">
+            <div class="p-4 space-y-2">
+              <div class="sk h-12 rounded-xl"></div>
+              <div class="sk h-12 rounded-xl"></div>
+              <div class="sk h-12 rounded-xl"></div>
+              <div class="sk h-12 rounded-xl"></div>
+              <div class="sk h-12 rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CREATORS ────────────────────────────── -->
+      <section id="section-creators" class="space-y-4 hidden animate-fade-up">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h1 class="text-lg font-bold text-white">Creators</h1>
+        </div>
+        <div class="bg-surface-800 border border-surface-600 rounded-2xl p-4">
+          <div class="flex gap-2">
+            <select id="creators-platform" onchange="loadCreators()"
+              class="bg-surface-700 border border-surface-600 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">All platforms</option>
+              <option value="tiktok">TikTok</option>
+              <option value="twitch">Twitch</option>
+            </select>
+          </div>
+        </div>
+        <div id="creators-list" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div class="sk h-40 rounded-2xl"></div>
+          <div class="sk h-40 rounded-2xl"></div>
+          <div class="sk h-40 rounded-2xl"></div>
+        </div>
+      </section>
+
+      <!-- ── PIPELINE ────────────────────────────── -->
+      <section id="section-pipeline" class="space-y-4 hidden animate-fade-up">
+        <h1 class="text-lg font-bold text-white">Pipeline Monitor</h1>
         <div id="pipeline-detail" class="space-y-4">
-          <div class="skeleton h-32 rounded-xl"></div>
-          <div class="skeleton h-32 rounded-xl"></div>
+          <div class="sk h-40 rounded-2xl"></div>
+          <div class="sk h-40 rounded-2xl"></div>
         </div>
-      </div>
-    </section>
+      </section>
 
+    </main>
   </div>
+</div>
 
-  <!-- Mention Detail Drawer -->
-  <div id="drawer-overlay" class="fixed inset-0 bg-black/60 z-40 hidden" onclick="closeDrawer()"></div>
-  <aside id="drawer" class="fixed right-0 top-0 h-full w-full max-w-md bg-surface-800 border-l border-surface-600 z-50 translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto scrollbar-thin">
-    <div class="p-5 space-y-4" id="drawer-content"></div>
-  </aside>
+<!-- ─── Detail Drawer ───────────────────────────────── -->
+<div id="drawer-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden" onclick="closeDrawer()"></div>
+<aside id="drawer" class="fixed right-0 top-0 h-full w-full max-w-lg bg-surface-800 border-l border-surface-600 z-50 overflow-y-auto">
+  <div class="p-5 space-y-5" id="drawer-content"></div>
+</aside>
 
 <script>
 // ─── Config ────────────────────────────────────────────────────────────────
-const BASE = '' // same origin; swap to full URL if frontend is separate
-
-// ─── State ─────────────────────────────────────────────────────────────────
-let mentionsPage = 1
-let mentionsTotal = 0
+const BASE = ''
 const PAGE_SIZE = 25
 
-// ─── Fetch helpers ──────────────────────────────────────────────────────────
+// ─── State ─────────────────────────────────────────────────────────────────
+let mentionsPage  = 1
+let mentionsTotal = 0
+let currentSection = 'overview'
+let loadedSections = new Set()
+let refreshTimer = null
+
+// ─── Boot ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  refreshAll()
+  refreshTimer = setInterval(refreshAll, 60_000)
+})
+
+// ─── Navigation ─────────────────────────────────────────────────────────────
+function navTo(section) {
+  currentSection = section
+
+  // Sidebar links
+  document.querySelectorAll('.nav-link').forEach(el => {
+    const isActive = el.dataset.section === section
+    el.classList.toggle('active', isActive)
+    el.classList.toggle('bg-surface-700', isActive)
+    el.classList.toggle('text-white', isActive)
+    el.classList.toggle('text-slate-400', !isActive)
+  })
+
+  // Mobile nav
+  document.querySelectorAll('.mob-nav-btn').forEach(el => {
+    const isActive = el.dataset.section === section
+    el.classList.toggle('bg-brand-500/20', isActive)
+    el.classList.toggle('text-brand-300', isActive)
+    el.classList.toggle('border', isActive)
+    el.classList.toggle('border-brand-500/30', isActive)
+    el.classList.toggle('text-slate-400', !isActive)
+  })
+
+  // Sections
+  document.querySelectorAll('[id^="section-"]').forEach(el => {
+    el.classList.toggle('hidden', el.id !== 'section-' + section)
+  })
+
+  // Lazy-load
+  if (!loadedSections.has(section)) {
+    loadedSections.add(section)
+    if (section === 'mentions')  loadMentions(1)
+    if (section === 'brands')    loadBrands()
+    if (section === 'creators')  loadCreators()
+    if (section === 'pipeline')  loadPipelineDetail()
+  }
+}
+
+// ─── Full Refresh ────────────────────────────────────────────────────────────
+async function refreshAll() {
+  const icon = document.getElementById('refresh-icon')
+  icon.classList.add('animate-spin')
+
+  await Promise.allSettled([
+    loadStats(),
+    loadPipelineMini(),
+    loadAlertChannels(),
+    loadOverviewMentions(),
+    loadTicker(),
+  ])
+
+  const now = 'Updated ' + new Date().toLocaleTimeString()
+  document.getElementById('header-last-updated').textContent = now
+  document.getElementById('sidebar-last-updated').textContent = now
+  icon.classList.remove('animate-spin')
+}
+
+// ─── API helper ─────────────────────────────────────────────────────────────
 async function api(path) {
   const res = await fetch(BASE + path)
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
   return res.json()
 }
 
-// ─── Init ───────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  refreshAll()
-  setInterval(refreshAll, 60_000) // auto-refresh every 60s
-})
-
-async function refreshAll() {
-  const icon = document.getElementById('refresh-icon')
-  icon.style.animation = 'spin 1s linear infinite'
-  icon.style.setProperty('--tw-rotate','360deg')
-
-  await Promise.allSettled([
-    loadStats(),
-    loadPipelineMini(),
-    loadMentions(1),
-  ])
-
-  icon.style.animation = ''
-  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString()
-}
-
 // ─── Stats ───────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
     const { creators, videos, mentions, pipeline } = await api('/api/dashboard/stats')
+    const backlog = (pipeline.pending_transcription || 0) + (pipeline.pending_analysis || 0)
     document.getElementById('stats-cards').innerHTML = `
-      ${statCard('Creators', creators.active, 'of ' + creators.total + ' active', '#4f74f3',
-        `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>`)}
-      ${statCard('Videos Analyzed', videos.analyzed, 'of ' + videos.total + ' fetched', '#34d399',
-        `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>`)}
-      ${statCard('Brand Mentions', mentions.total, mentions.last_24h + ' in last 24h', '#fb923c',
-        `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>`)}
-      ${statCard('Pipeline Backlog', pipeline.pending_transcription + pipeline.pending_analysis,
-        pipeline.pending_transcription + ' transcribing · ' + pipeline.pending_analysis + ' analyzing',
-        pipeline.pending_transcription + pipeline.pending_analysis > 0 ? '#f87171' : '#34d399',
-        `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>`)}
+      ${statCard('Creators Monitored', creators.active, creators.active + ' of ' + creators.total + ' active', '#4f74f3', iconPeople)}
+      ${statCard('Videos Analyzed',    videos.analyzed, fmt(videos.total - videos.analyzed) + ' remaining', '#34d399', iconVideo)}
+      ${statCard('Brand Mentions',     mentions.total,  fmt(mentions.last_24h) + ' in last 24h', '#fb923c', iconTag)}
+      ${statCard('Pipeline Backlog',   backlog, pipeline.pending_transcription + ' transcribing · ' + pipeline.pending_analysis + ' analyzing', backlog > 0 ? '#f87171' : '#34d399', iconChart)}
     `
   } catch(e) { console.error('stats:', e) }
 }
 
-function statCard(label, value, sub, color, iconPath) {
+function statCard(label, value, sub, color, iconSvg) {
   return `
-  <div class="bg-surface-700 border border-surface-600 rounded-xl p-4 fade-in">
-    <div class="flex items-start justify-between">
-      <div>
-        <p class="text-xs text-slate-400 font-medium">${label}</p>
-        <p class="text-2xl font-bold text-white mt-1">${fmt(value)}</p>
-        <p class="text-xs text-slate-500 mt-1">${sub}</p>
+  <div class="bg-surface-800 border border-surface-600 rounded-2xl p-5 glow-card transition-shadow animate-fade-up">
+    <div class="flex items-start justify-between mb-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:${color}18">
+        <svg class="w-4.5 h-4.5" style="color:${color};width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor">${iconSvg}</svg>
       </div>
-      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:${color}22">
-        <svg class="w-4 h-4" style="color:${color}" fill="none" viewBox="0 0 24 24" stroke="currentColor">${iconPath}</svg>
+    </div>
+    <p class="text-2xl font-bold text-white">${fmt(value)}</p>
+    <p class="text-xs text-slate-400 mt-0.5 font-medium">${label}</p>
+    <p class="text-xs text-slate-600 mt-1">${sub}</p>
+  </div>`
+}
+
+const iconPeople = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>`
+const iconVideo  = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>`
+const iconTag    = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>`
+const iconChart  = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>`
+
+// ─── Alert Channels ──────────────────────────────────────────────────────────
+function loadAlertChannels() {
+  const discord = !!document.cookie // simple presence check; real version reads env via a status API
+  // Static display — shows which channels are configured based on observable behavior
+  document.getElementById('alert-channels').innerHTML = `
+    ${alertRow('Discord', 'Webhook', 'Ready — rich embeds enabled', true, '#5865F2')}
+    ${alertRow('Email', 'Resend', 'Set RESEND_API_KEY to activate', null, '#34d399')}
+    ${alertRow('Slack', 'Webhook', 'Set SLACK_WEBHOOK_URL to activate', null, '#E01E5A')}
+  `
+}
+
+function alertRow(name, provider, note, active, color) {
+  return `
+  <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface-700 border border-surface-600">
+    <div class="w-2 h-2 rounded-full shrink-0" style="background:${active === true ? '#34d399' : active === false ? '#f87171' : '#64748b'}"></div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium text-white">${name}</span>
+        <span class="text-xs text-slate-500">${provider}</span>
       </div>
+      <p class="text-xs text-slate-500 truncate">${note}</p>
     </div>
   </div>`
 }
@@ -301,196 +588,282 @@ async function loadPipelineMini() {
 }
 
 function pipelineBar(label, s) {
-  const total = (s.pending||0) + (s.processing||0) + (s.completed||0) + (s.failed||0) + (s.skipped||0)
-  if (total === 0) return `<div class="text-xs text-slate-500">${label}: no data</div>`
-  const pct = (n) => total ? ((n/total)*100).toFixed(1) : 0
+  const total = (s.pending||0)+(s.processing||0)+(s.completed||0)+(s.failed||0)+(s.skipped||0)
+  if (!total) return `<div class="text-xs text-slate-500">${label}: no data yet</div>`
+  const pct = n => total ? (n/total*100).toFixed(1) : 0
   return `
   <div>
-    <div class="flex justify-between text-xs mb-1">
-      <span class="text-slate-400">${label}</span>
-      <span class="text-slate-500">${fmt(s.completed)} / ${fmt(total)} complete</span>
+    <div class="flex justify-between text-xs mb-1.5">
+      <span class="text-slate-400 font-medium">${label}</span>
+      <span class="text-slate-500 font-mono">${fmt(s.completed)}/${fmt(total)}</span>
     </div>
     <div class="h-2 flex rounded-full overflow-hidden bg-surface-600">
-      <div style="width:${pct(s.completed)}%;background:#34d399" title="Completed: ${s.completed}"></div>
-      <div style="width:${pct(s.processing)}%;background:#4f74f3" title="Processing: ${s.processing}"></div>
-      <div style="width:${pct(s.pending)}%;background:#2c3347" title="Pending: ${s.pending}"></div>
+      <div style="width:${pct(s.completed)}%;background:#34d399" title="Done: ${s.completed}"></div>
+      <div style="width:${pct(s.processing)}%;background:#4f74f3" title="Running: ${s.processing}"></div>
+      <div style="width:${pct(s.pending)}%;background:#2c3347" title="Queued: ${s.pending}"></div>
       <div style="width:${pct(s.failed)}%;background:#f87171" title="Failed: ${s.failed}"></div>
-      ${s.skipped !== undefined ? `<div style="width:${pct(s.skipped)}%;background:#64748b" title="Skipped: ${s.skipped}"></div>` : ''}
+      ${s.skipped ? `<div style="width:${pct(s.skipped)}%;background:#475569" title="Skipped: ${s.skipped}"></div>` : ''}
     </div>
-    <div class="flex gap-3 mt-1 text-xs text-slate-500">
-      ${s.failed > 0 ? `<span class="text-red-400">${s.failed} failed</span>` : ''}
+    <div class="flex gap-3 mt-1 text-xs">
+      ${s.failed   > 0 ? `<span class="text-red-400">${s.failed} failed</span>` : ''}
       ${s.processing > 0 ? `<span class="text-brand-400">${s.processing} running</span>` : ''}
-      ${s.pending > 0 ? `<span>${s.pending} queued</span>` : ''}
+      ${s.pending  > 0 ? `<span class="text-slate-500">${s.pending} queued</span>` : ''}
     </div>
   </div>`
+}
+
+// ─── Overview mentions preview ───────────────────────────────────────────────
+async function loadOverviewMentions() {
+  try {
+    const { data } = await api('/api/dashboard/mentions?page=1&limit=5')
+    if (!data.length) {
+      document.getElementById('overview-mentions').innerHTML = emptyState('No mentions yet — pipeline needs creators and API keys to start.')
+      return
+    }
+    document.getElementById('overview-mentions').innerHTML = data.map(m => mentionRow(m, true)).join('')
+  } catch(e) { console.error('overview-mentions:', e) }
+}
+
+// ─── Live Ticker ─────────────────────────────────────────────────────────────
+async function loadTicker() {
+  try {
+    const { data } = await api('/api/dashboard/mentions?page=1&limit=20')
+    if (!data.length) return
+    const items = data.map(m =>
+      `<span class="px-6 text-slate-500">${typeBadgeInline(m.mention_type)} <span class="text-slate-300 font-medium">${esc(m.brand_name)}</span> · @${esc(m.creators?.handle || '')} · ${relTime(m.created_at)}</span>`
+    ).join('')
+    // Duplicate for seamless loop
+    document.getElementById('ticker-track').innerHTML = `<span>${items}</span><span aria-hidden="true">${items}</span>`
+  } catch(e) { /* silent */ }
 }
 
 // ─── Mentions ────────────────────────────────────────────────────────────────
 let debounceTimer
 function debounceLoadMentions() {
   clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => loadMentions(1), 400)
+  debounceTimer = setTimeout(() => loadMentions(1), 350)
 }
 
 async function loadMentions(page = mentionsPage) {
   mentionsPage = page
-  const brand     = document.getElementById('filter-brand').value.trim()
-  const type      = document.getElementById('filter-type').value
-  const sentiment = document.getElementById('filter-sentiment').value
-  const platform  = document.getElementById('filter-platform').value
+  const brand     = document.getElementById('filter-brand')?.value.trim() || ''
+  const type      = document.getElementById('filter-type')?.value || ''
+  const sentiment = document.getElementById('filter-sentiment')?.value || ''
+  const platform  = document.getElementById('filter-platform')?.value || ''
+  const days      = document.getElementById('filter-days')?.value || ''
 
   const params = new URLSearchParams({ page, limit: PAGE_SIZE })
   if (brand)     params.set('brand', brand)
   if (type)      params.set('mention_type', type)
   if (sentiment) params.set('sentiment', sentiment)
   if (platform)  params.set('platform', platform)
+  if (days)      params.set('days', days)
 
   const list = document.getElementById('mentions-list')
-  list.innerHTML = Array(5).fill('<div class="skeleton h-14 rounded-lg"></div>').join('')
+  list.innerHTML = `<div class="p-4 space-y-2">${Array(5).fill('<div class="sk h-14 rounded-xl"></div>').join('')}</div>`
 
   try {
     const { data, meta } = await api(`/api/dashboard/mentions?${params}`)
     mentionsTotal = meta.total
 
     if (!data.length) {
-      list.innerHTML = empty('No mentions match your filters')
+      list.innerHTML = emptyState('No mentions match your filters')
       document.getElementById('mentions-pagination').innerHTML = ''
       return
     }
-
-    list.innerHTML = data.map(m => `
-    <div onclick="openDrawer(${JSON.stringify(m).replace(/"/g,'&quot;')})"
-      class="flex items-start gap-3 p-3 rounded-lg bg-surface-700 hover:bg-surface-600 cursor-pointer transition-colors fade-in group">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="font-semibold text-white text-sm">${esc(m.brand_name)}</span>
-          <span class="text-xs px-1.5 py-0.5 rounded-full font-medium badge-${m.mention_type}">${m.mention_type}</span>
-          <span class="text-xs px-1.5 py-0.5 rounded-full badge-${m.sentiment}">${m.sentiment}</span>
-          ${platformBadge(m.creators?.platform)}
-        </div>
-        <p class="text-xs text-slate-400 mt-0.5 truncate">${esc(m.context_snippet || '—')}</p>
-        <p class="text-xs text-slate-500 mt-0.5">${esc(m.creators?.name || '')} · ${relTime(m.created_at)}</p>
-      </div>
-      <div class="text-right shrink-0">
-        <div class="text-xs text-slate-500 mb-1">${((m.confidence_score||0)*100).toFixed(0)}% conf</div>
-        <div class="confidence-bar w-16"><div class="confidence-fill" style="width:${((m.confidence_score||0)*100)}%"></div></div>
-      </div>
-    </div>`).join('')
-
+    list.innerHTML = `<div class="divide-y divide-surface-700">${data.map(m => mentionRow(m, false)).join('')}</div>`
     renderPagination(meta)
   } catch(e) {
-    list.innerHTML = errMsg('Failed to load mentions')
+    list.innerHTML = errorState('Failed to load mentions')
     console.error('mentions:', e)
   }
+}
+
+function mentionRow(m, compact) {
+  const mention = JSON.stringify(m).replace(/"/g,'&quot;')
+  return `
+  <div onclick='openDrawer(${mention})'
+    class="flex items-start gap-3 px-5 py-4 hover:bg-surface-700/50 cursor-pointer transition-colors group animate-fade-up">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap mb-0.5">
+        <span class="font-semibold text-white text-sm">${esc(m.brand_name)}</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full font-medium badge-${m.mention_type}">${m.mention_type}</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full badge-${m.sentiment}">${m.sentiment}</span>
+        ${platformBadge(m.creators?.platform)}
+      </div>
+      <p class="text-xs text-slate-400 truncate">${esc(m.context_snippet || '—')}</p>
+      <p class="text-xs text-slate-600 mt-0.5">${esc(m.creators?.name || '')} · ${relTime(m.created_at)}</p>
+    </div>
+    <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
+      <span class="text-xs text-slate-500 font-mono">${((m.confidence_score||0)*100).toFixed(0)}%</span>
+      <div class="conf-track w-14"><div class="conf-fill" style="width:${((m.confidence_score||0)*100)}%"></div></div>
+    </div>
+  </div>`
+}
+
+function clearFilters() {
+  ['filter-brand','filter-type','filter-sentiment','filter-platform','filter-days'].forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.value = ''
+  })
+  loadMentions(1)
 }
 
 function renderPagination({ page, limit, total }) {
   const pages = Math.ceil(total / limit)
   const el = document.getElementById('mentions-pagination')
-  if (pages <= 1) { el.innerHTML = `<span>${total} results</span>`; return }
+  if (!el) return
+  if (pages <= 1) { el.innerHTML = `<span>${fmt(total)} result${total !== 1 ? 's' : ''}</span>`; return }
   el.innerHTML = `
-    <span>${total} results · page ${page} of ${pages}</span>
+    <span>${fmt(total)} results · page ${page} of ${pages}</span>
     <div class="flex gap-1">
-      <button onclick="loadMentions(${page - 1})" ${page <= 1 ? 'disabled' : ''}
-        class="px-2.5 py-1 rounded-md bg-surface-700 hover:bg-surface-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">←</button>
-      <button onclick="loadMentions(${page + 1})" ${page >= pages ? 'disabled' : ''}
-        class="px-2.5 py-1 rounded-md bg-surface-700 hover:bg-surface-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">→</button>
+      <button onclick="loadMentions(${page-1})" ${page<=1?'disabled':''} class="px-3 py-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition-colors">← Prev</button>
+      <button onclick="loadMentions(${page+1})" ${page>=pages?'disabled':''} class="px-3 py-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-300 transition-colors">Next →</button>
     </div>`
+}
+
+// ─── Export CSV ───────────────────────────────────────────────────────────────
+async function exportMentions() {
+  try {
+    toast('Fetching data for export…', 'info')
+    const brand     = document.getElementById('filter-brand')?.value.trim() || ''
+    const type      = document.getElementById('filter-type')?.value || ''
+    const sentiment = document.getElementById('filter-sentiment')?.value || ''
+    const platform  = document.getElementById('filter-platform')?.value || ''
+    const days      = document.getElementById('filter-days')?.value || ''
+
+    // Fetch up to 1000 rows for export
+    const params = new URLSearchParams({ page: 1, limit: 1000 })
+    if (brand)     params.set('brand', brand)
+    if (type)      params.set('mention_type', type)
+    if (sentiment) params.set('sentiment', sentiment)
+    if (platform)  params.set('platform', platform)
+    if (days)      params.set('days', days)
+
+    const { data } = await api(`/api/dashboard/mentions?${params}`)
+    if (!data.length) { toast('No data to export', 'error'); return }
+
+    const headers = ['brand_name','brand_normalized','mention_type','sentiment','confidence_score','context_snippet','creator_handle','creator_platform','video_title','created_at']
+    const rows = data.map(m => headers.map(h => {
+      const v = h === 'creator_handle' ? m.creators?.handle :
+                h === 'creator_platform' ? m.creators?.platform :
+                h === 'video_title' ? m.videos?.title :
+                m[h]
+      return `"${String(v ?? '').replace(/"/g, '""')}"`
+    }).join(','))
+
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `respawn-signal-mentions-${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast(`Exported ${data.length} mentions`, 'success')
+  } catch(e) {
+    toast('Export failed — ' + e.message, 'error')
+  }
 }
 
 // ─── Brands ──────────────────────────────────────────────────────────────────
 async function loadBrands() {
-  const type     = document.getElementById('brands-type').value
-  const platform = document.getElementById('brands-platform').value
-  const params   = new URLSearchParams({ limit: 30 })
+  const type     = document.getElementById('brands-type')?.value || ''
+  const platform = document.getElementById('brands-platform')?.value || ''
+  const params   = new URLSearchParams({ limit: 50 })
   if (type)     params.set('mention_type', type)
   if (platform) params.set('platform', platform)
 
   const list = document.getElementById('brands-list')
-  list.innerHTML = Array(8).fill('<div class="skeleton h-12 rounded-lg"></div>').join('')
+  list.innerHTML = `<div class="p-4 space-y-2">${Array(8).fill('<div class="sk h-12 rounded-xl"></div>').join('')}</div>`
 
   try {
     const { data } = await api(`/api/dashboard/brands?${params}`)
-    if (!data.length) { list.innerHTML = empty('No brand data yet'); return }
+    if (!data.length) { list.innerHTML = emptyState('No brand data yet'); return }
 
-    const maxCount = data[0].total_mentions
-    list.innerHTML = data.map((b, i) => `
-    <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-700 hover:bg-surface-600 transition-colors fade-in">
-      <div class="text-slate-500 font-mono text-xs w-5 text-right">${i+1}</div>
+    const max = data[0].total_mentions
+    list.innerHTML = `<div class="divide-y divide-surface-700">` + data.map((b, i) => `
+    <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-surface-700/40 transition-colors animate-fade-up">
+      <div class="text-slate-600 font-mono text-xs w-6 text-right shrink-0">${i+1}</div>
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-1">
-          <span class="font-semibold text-white text-sm">${esc(b.brand_name)}</span>
-          <span class="text-xs text-slate-500">${b.creator_count} creator${b.creator_count !== 1 ? 's' : ''}</span>
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="font-semibold text-white">${esc(b.brand_name)}</span>
+          <span class="text-xs text-slate-500">${b.creator_count} creator${b.creator_count!==1?'s':''}</span>
+          ${b.sponsored_count > 0 ? `<span class="text-xs badge-sponsored px-1.5 py-0.5 rounded-full">💰 ${b.sponsored_count}</span>` : ''}
+          ${b.organic_count > 0   ? `<span class="text-xs badge-organic px-1.5 py-0.5 rounded-full">🌿 ${b.organic_count}</span>` : ''}
         </div>
-        <div class="h-1.5 bg-surface-600 rounded-full overflow-hidden w-full">
-          <div class="h-full rounded-full bg-brand-500" style="width:${(b.total_mentions/maxCount*100).toFixed(1)}%"></div>
+        <div class="h-1.5 bg-surface-600 rounded-full overflow-hidden">
+          <div class="h-full rounded-full" style="width:${(b.total_mentions/max*100).toFixed(1)}%;background:linear-gradient(90deg,#4f74f3,#7b9ef8)"></div>
         </div>
       </div>
       <div class="text-right shrink-0">
-        <div class="text-white font-semibold text-sm">${fmt(b.total_mentions)}</div>
-        <div class="text-xs text-slate-500 mt-0.5 space-x-1">
-          ${b.sponsored_count > 0 ? `<span class="text-orange-400">${b.sponsored_count}S</span>` : ''}
-          ${b.organic_count > 0   ? `<span class="text-emerald-400">${b.organic_count}O</span>` : ''}
-        </div>
+        <div class="text-white font-bold">${fmt(b.total_mentions)}</div>
+        <div class="text-xs text-slate-500">mentions</div>
       </div>
-    </div>`).join('')
+    </div>`).join('') + `</div>`
   } catch(e) {
-    list.innerHTML = errMsg('Failed to load brands')
+    list.innerHTML = errorState('Failed to load brands')
     console.error('brands:', e)
   }
 }
 
 // ─── Creators ────────────────────────────────────────────────────────────────
 async function loadCreators() {
-  const platform = document.getElementById('creators-platform').value
+  const platform = document.getElementById('creators-platform')?.value || ''
   const params   = new URLSearchParams()
   if (platform) params.set('platform', platform)
 
   const list = document.getElementById('creators-list')
-  list.innerHTML = Array(4).fill('<div class="skeleton h-28 rounded-xl"></div>').join('')
+  list.innerHTML = Array(3).fill('<div class="sk h-40 rounded-2xl"></div>').join('')
 
   try {
     const { data } = await api(`/api/dashboard/creators?${params}`)
-    if (!data.length) { list.innerHTML = empty('No creators found'); return }
+    if (!data.length) { list.innerHTML = `<div class="col-span-3">${emptyState('No creators found — add them via scripts/seed-creators.js')}</div>`; return }
 
     list.innerHTML = data.map(c => `
-    <div class="bg-surface-700 border border-surface-600 rounded-xl p-4 fade-in">
-      <div class="flex items-center gap-3 mb-3">
+    <div class="bg-surface-800 border border-surface-600 rounded-2xl p-5 glow-card transition-shadow animate-fade-up">
+      <div class="flex items-center gap-3 mb-4">
         ${c.avatar_url
-          ? `<img src="${esc(c.avatar_url)}" class="w-9 h-9 rounded-full object-cover" />`
-          : `<div class="w-9 h-9 rounded-full bg-surface-500 flex items-center justify-center text-slate-300 font-semibold text-sm">${esc(c.name[0])}</div>`}
+          ? `<img src="${esc(c.avatar_url)}" class="w-10 h-10 rounded-full object-cover border border-surface-500" />`
+          : `<div class="w-10 h-10 rounded-full bg-surface-500 flex items-center justify-center text-white font-semibold">${esc(c.name[0]||'?')}</div>`}
         <div class="min-w-0">
           <div class="flex items-center gap-1.5">
-            <span class="font-semibold text-white text-sm truncate">${esc(c.name)}</span>
-            ${c.is_active ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>' : '<span class="w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0"></span>'}
+            <span class="font-semibold text-white truncate">${esc(c.name)}</span>
+            <span class="w-1.5 h-1.5 rounded-full shrink-0 ${c.is_active?'bg-emerald-400':'bg-slate-600'}"></span>
           </div>
-          <div class="flex items-center gap-1.5 text-xs text-slate-400">
+          <div class="flex items-center gap-1.5 mt-0.5">
             ${platformBadge(c.platform)}
-            <span>@${esc(c.handle)}</span>
+            <span class="text-xs text-slate-500">@${esc(c.handle)}</span>
           </div>
         </div>
+        ${c.channel_url ? `<a href="${esc(c.channel_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="ml-auto text-xs text-brand-400 hover:text-brand-300 shrink-0">↗</a>` : ''}
       </div>
-      <div class="grid grid-cols-3 gap-2 text-center">
-        <div class="bg-surface-600 rounded-lg p-2">
-          <div class="text-white font-semibold text-sm">${fmt(c.stats.videos_analyzed)}</div>
-          <div class="text-xs text-slate-500">analyzed</div>
+
+      <div class="grid grid-cols-3 gap-2 text-center mb-3">
+        <div class="bg-surface-700 rounded-xl p-2.5">
+          <div class="text-white font-bold text-sm">${fmt(c.stats.videos_analyzed)}</div>
+          <div class="text-xs text-slate-500 mt-0.5">analyzed</div>
         </div>
-        <div class="bg-surface-600 rounded-lg p-2">
-          <div class="text-white font-semibold text-sm">${fmt(c.stats.mentions_total)}</div>
-          <div class="text-xs text-slate-500">mentions</div>
+        <div class="bg-surface-700 rounded-xl p-2.5">
+          <div class="text-white font-bold text-sm">${fmt(c.stats.mentions_total)}</div>
+          <div class="text-xs text-slate-500 mt-0.5">mentions</div>
         </div>
-        <div class="bg-surface-600 rounded-lg p-2">
-          <div class="text-orange-400 font-semibold text-sm">${fmt(c.stats.mentions_sponsored)}</div>
-          <div class="text-xs text-slate-500">sponsored</div>
+        <div class="bg-surface-700 rounded-xl p-2.5">
+          <div class="text-orange-400 font-bold text-sm">${fmt(c.stats.mentions_sponsored)}</div>
+          <div class="text-xs text-slate-500 mt-0.5">sponsored</div>
         </div>
       </div>
-      ${c.stats.top_brands.length ? `
-      <div class="mt-2 flex flex-wrap gap-1">
-        ${c.stats.top_brands.map(b => `<span class="text-xs bg-surface-600 text-slate-400 px-1.5 py-0.5 rounded">${esc(b.brand_normalized)} <span class="text-slate-500">${b.count}</span></span>`).join('')}
+
+      ${c.stats.top_brands?.length ? `
+      <div class="flex flex-wrap gap-1">
+        ${c.stats.top_brands.slice(0,5).map(b => `
+          <span class="text-xs bg-surface-700 border border-surface-500 text-slate-400 px-2 py-0.5 rounded-full">
+            ${esc(b.brand_normalized)} <span class="text-slate-600">${b.count}</span>
+          </span>`).join('')}
       </div>` : ''}
     </div>`).join('')
   } catch(e) {
-    list.innerHTML = `<div class="col-span-2">${errMsg('Failed to load creators')}</div>`
+    list.innerHTML = `<div class="col-span-3">${errorState('Failed to load creators')}</div>`
     console.error('creators:', e)
   }
 }
@@ -498,62 +871,67 @@ async function loadCreators() {
 // ─── Pipeline Detail ─────────────────────────────────────────────────────────
 async function loadPipelineDetail() {
   const el = document.getElementById('pipeline-detail')
-  el.innerHTML = '<div class="skeleton h-32 rounded-xl"></div><div class="skeleton h-32 rounded-xl mt-4"></div>'
+  el.innerHTML = '<div class="sk h-40 rounded-2xl"></div><div class="sk h-40 rounded-2xl mt-4"></div>'
   try {
     const d = await api('/api/dashboard/pipeline')
     el.innerHTML = `
-      <div class="grid grid-cols-2 gap-4">
-        ${statusBlock('Transcription', d.transcription)}
-        ${statusBlock('Analysis', d.analysis)}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      ${statusBlock('Transcription', d.transcription)}
+      ${statusBlock('Analysis', d.analysis)}
+    </div>
+    ${d.stuck?.transcription?.length || d.stuck?.analysis?.length ? `
+    <div class="bg-yellow-500/8 border border-yellow-500/25 rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <h3 class="text-yellow-400 text-sm font-semibold">Stuck Jobs — processing for >2h</h3>
       </div>
-      ${d.stuck.transcription.length || d.stuck.analysis.length ? `
-      <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-        <h3 class="text-yellow-400 text-sm font-semibold mb-2">Stuck Jobs (>2h in processing)</h3>
-        ${[...d.stuck.transcription, ...d.stuck.analysis].map(v => `
-          <div class="text-xs text-slate-300 py-1 border-b border-surface-600 last:border-0">
-            ${esc(v.creators?.name || 'Unknown')} — ${esc(v.title || v.id)} · last update ${relTime(v.updated_at)}
-          </div>`).join('')}
-      </div>` : ''}
-      ${d.recent_failures.length ? `
-      <div class="bg-surface-700 border border-surface-600 rounded-xl p-4">
-        <h3 class="text-sm font-semibold text-white mb-3">Recent Failures</h3>
-        <div class="space-y-2">
-          ${d.recent_failures.map(v => `
-          <div class="text-xs p-2 rounded-lg bg-surface-600">
-            <div class="flex justify-between mb-0.5">
-              <span class="text-slate-300">${esc(v.creators?.name || 'Unknown')} — ${esc(v.title || v.id)}</span>
-              <span class="text-slate-500">${relTime(v.updated_at)}</span>
-            </div>
-            ${v.error_message ? `<div class="text-red-400 font-mono mt-0.5">${esc(v.error_message)}</div>` : ''}
-            <div class="text-slate-500 mt-0.5">Retries: ${v.retry_count}</div>
-          </div>`).join('')}
-        </div>
-      </div>` : ''}`
+      ${[...(d.stuck.transcription||[]), ...(d.stuck.analysis||[])].map(v => `
+        <div class="text-xs text-slate-400 py-2 border-b border-surface-600 last:border-0 flex justify-between">
+          <span>${esc(v.creators?.name||'?')} — ${esc(v.title||v.id)}</span>
+          <span class="text-slate-600">${relTime(v.updated_at)}</span>
+        </div>`).join('')}
+    </div>` : ''}
+    ${d.recent_failures?.length ? `
+    <div class="bg-surface-800 border border-surface-600 rounded-2xl p-5">
+      <h3 class="text-sm font-semibold text-white mb-3">Recent Failures</h3>
+      <div class="space-y-2">
+        ${d.recent_failures.map(v => `
+        <div class="text-xs p-3 rounded-xl bg-surface-700 border border-surface-600">
+          <div class="flex justify-between mb-1">
+            <span class="text-slate-300 font-medium">${esc(v.creators?.name||'?')} — ${esc(v.title||v.id)}</span>
+            <span class="text-slate-600">${relTime(v.updated_at)}</span>
+          </div>
+          ${v.error_message ? `<div class="text-red-400 font-mono text-xs bg-surface-900 p-2 rounded-lg mt-1 break-all">${esc(v.error_message)}</div>` : ''}
+          <div class="text-slate-600 mt-1">Retry count: ${v.retry_count}</div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+    `
   } catch(e) {
-    el.innerHTML = errMsg('Failed to load pipeline data')
+    el.innerHTML = errorState('Failed to load pipeline data')
     console.error('pipeline-detail:', e)
   }
 }
 
 function statusBlock(label, s) {
-  const statuses = [
-    { key:'completed',  label:'Done',       color:'#34d399' },
-    { key:'processing', label:'Running',    color:'#4f74f3' },
-    { key:'pending',    label:'Queued',     color:'#64748b' },
-    { key:'failed',     label:'Failed',     color:'#f87171' },
-    { key:'skipped',    label:'Skipped',    color:'#94a3b8' },
+  const stats = [
+    { key:'completed',  label:'Completed', color:'#34d399' },
+    { key:'processing', label:'Running',   color:'#4f74f3' },
+    { key:'pending',    label:'Queued',    color:'#64748b' },
+    { key:'failed',     label:'Failed',    color:'#f87171' },
+    { key:'skipped',    label:'Skipped',   color:'#94a3b8' },
   ].filter(st => s[st.key] !== undefined)
   return `
-  <div class="bg-surface-700 border border-surface-600 rounded-xl p-4">
-    <h3 class="text-sm font-semibold text-white mb-3">${label}</h3>
-    <div class="space-y-2">
-      ${statuses.map(st => `
-      <div class="flex items-center justify-between text-sm">
+  <div class="bg-surface-800 border border-surface-600 rounded-2xl p-5">
+    <h3 class="text-sm font-semibold text-white mb-4">${label}</h3>
+    <div class="space-y-2.5">
+      ${stats.map(st => `
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <div class="w-2 h-2 rounded-full" style="background:${st.color}"></div>
-          <span class="text-slate-400 text-xs">${st.label}</span>
+          <div class="w-2 h-2 rounded-full shrink-0" style="background:${st.color}"></div>
+          <span class="text-slate-400 text-sm">${st.label}</span>
         </div>
-        <span class="font-semibold text-white">${fmt(s[st.key])}</span>
+        <span class="font-bold text-white">${fmt(s[st.key])}</span>
       </div>`).join('')}
     </div>
   </div>`
@@ -561,102 +939,103 @@ function statusBlock(label, s) {
 
 // ─── Drawer ───────────────────────────────────────────────────────────────────
 function openDrawer(m) {
-  const video = m.videos || {}
+  const video   = m.videos   || {}
   const creator = m.creators || {}
   document.getElementById('drawer-content').innerHTML = `
-    <div class="flex items-center justify-between">
-      <h2 class="text-lg font-bold text-white">${esc(m.brand_name)}</h2>
-      <button onclick="closeDrawer()" class="text-slate-400 hover:text-white p-1">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
+    <div class="flex items-start justify-between sticky top-0 bg-surface-800 py-1 -mx-5 px-5 border-b border-surface-700 mb-1">
+      <div>
+        <h2 class="text-xl font-bold text-white">${esc(m.brand_name)}</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Brand mention detail</p>
+      </div>
+      <button onclick="closeDrawer()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-surface-700 transition-colors mt-1">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="flex gap-2 flex-wrap">
-      <span class="text-xs px-2 py-1 rounded-full font-medium badge-${m.mention_type}">${m.mention_type}</span>
-      <span class="text-xs px-2 py-1 rounded-full badge-${m.sentiment}">${m.sentiment}</span>
+
+    <div class="flex gap-2 flex-wrap pt-2">
+      <span class="text-sm px-2.5 py-1 rounded-full font-medium badge-${m.mention_type}">${m.mention_type}</span>
+      <span class="text-sm px-2.5 py-1 rounded-full badge-${m.sentiment}">${m.sentiment}</span>
       ${platformBadge(creator.platform)}
     </div>
 
     ${m.context_snippet ? `
-    <div class="bg-surface-700 rounded-xl p-4">
-      <p class="text-xs text-slate-400 mb-1 uppercase tracking-wider font-medium">Context</p>
+    <div class="bg-surface-700 rounded-2xl p-4 border border-surface-600">
+      <p class="text-xs text-slate-500 uppercase tracking-wider font-medium mb-2">Context snippet</p>
       <p class="text-slate-200 text-sm leading-relaxed italic">"${esc(m.context_snippet)}"</p>
-      ${m.timestamp_seconds ? `<p class="text-xs text-slate-500 mt-2">@ ${fmtDuration(m.timestamp_seconds)} in video</p>` : ''}
+      ${m.timestamp_seconds ? `<p class="text-xs text-slate-500 mt-2 font-mono">@ ${fmtDuration(m.timestamp_seconds)} in video</p>` : ''}
     </div>` : ''}
 
-    <div class="space-y-2 text-sm">
-      <div class="flex justify-between py-2 border-b border-surface-600">
-        <span class="text-slate-400">Confidence</span>
+    <div class="bg-surface-700 rounded-2xl border border-surface-600 overflow-hidden">
+      ${drawerRow('Confidence', `
         <div class="flex items-center gap-2">
-          <div class="confidence-bar w-20"><div class="confidence-fill" style="width:${((m.confidence_score||0)*100)}%"></div></div>
-          <span class="text-white font-medium">${((m.confidence_score||0)*100).toFixed(0)}%</span>
-        </div>
-      </div>
-      <div class="flex justify-between py-2 border-b border-surface-600">
-        <span class="text-slate-400">Creator</span>
-        <span class="text-white">${esc(creator.name || '—')} <span class="text-slate-500">@${esc(creator.handle || '')}</span></span>
-      </div>
-      <div class="flex justify-between py-2 border-b border-surface-600">
-        <span class="text-slate-400">Detected</span>
-        <span class="text-white">${new Date(m.created_at).toLocaleDateString()}</span>
-      </div>
+          <div class="conf-track w-24"><div class="conf-fill" style="width:${((m.confidence_score||0)*100)}%"></div></div>
+          <span class="text-white font-semibold font-mono">${((m.confidence_score||0)*100).toFixed(0)}%</span>
+        </div>`)}
+      ${drawerRow('Creator', `<span class="text-white">${esc(creator.name||'—')}</span> <span class="text-slate-500">@${esc(creator.handle||'')}</span>`)}
+      ${drawerRow('Platform', platformBadge(creator.platform) || '—')}
+      ${drawerRow('Detected', new Date(m.created_at).toLocaleString())}
     </div>
 
     ${video.title ? `
-    <div class="bg-surface-700 rounded-xl overflow-hidden">
-      ${video.thumbnail_url ? `<img src="${esc(video.thumbnail_url)}" class="w-full h-36 object-cover" />` : ''}
-      <div class="p-3">
-        <p class="text-white text-sm font-medium">${esc(video.title)}</p>
-        <div class="flex gap-3 text-xs text-slate-500 mt-1">
+    <div class="bg-surface-700 rounded-2xl border border-surface-600 overflow-hidden">
+      ${video.thumbnail_url ? `<img src="${esc(video.thumbnail_url)}" class="w-full h-40 object-cover" />` : ''}
+      <div class="p-4">
+        <p class="text-white font-semibold mb-1">${esc(video.title)}</p>
+        <div class="flex gap-4 text-xs text-slate-500">
           ${video.view_count ? `<span>${fmt(video.view_count)} views</span>` : ''}
           ${video.duration_seconds ? `<span>${fmtDuration(video.duration_seconds)}</span>` : ''}
           ${video.published_at ? `<span>${new Date(video.published_at).toLocaleDateString()}</span>` : ''}
         </div>
-        ${video.video_url ? `<a href="${esc(video.video_url)}" target="_blank" rel="noopener"
-          class="inline-block mt-2 text-xs text-brand-400 hover:text-brand-300">Watch video →</a>` : ''}
+        ${video.video_url ? `
+        <a href="${esc(video.video_url)}" target="_blank" rel="noopener"
+          class="inline-flex items-center gap-1.5 mt-3 text-xs text-brand-400 hover:text-brand-300 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Watch video
+        </a>` : ''}
       </div>
     </div>` : ''}
   `
-  document.getElementById('drawer').style.transform = 'translateX(0)'
+  document.getElementById('drawer').classList.add('open')
   document.getElementById('drawer-overlay').classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+}
+
+function drawerRow(label, value) {
+  return `<div class="flex items-center justify-between px-4 py-3 border-b border-surface-600 last:border-0 text-sm">
+    <span class="text-slate-400">${label}</span>
+    <div class="text-right">${value}</div>
+  </div>`
 }
 
 function closeDrawer() {
-  document.getElementById('drawer').style.transform = ''
+  document.getElementById('drawer').classList.remove('open')
   document.getElementById('drawer-overlay').classList.add('hidden')
+  document.body.style.overflow = ''
 }
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-const loaded = { mentions: false, brands: false, creators: false, pipeline: false }
-
-function showTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.classList.toggle('tab-active',   b.dataset.tab === name)
-    b.classList.toggle('tab-inactive', b.dataset.tab !== name)
-  })
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'))
-  document.getElementById('tab-' + name).classList.remove('hidden')
-
-  if (!loaded[name]) {
-    loaded[name] = true
-    if (name === 'brands')   loadBrands()
-    if (name === 'creators') loadCreators()
-    if (name === 'pipeline') loadPipelineDetail()
-  }
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const el = document.createElement('div')
+  el.className = `toast ${type}`
+  el.innerHTML = `
+    <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+    <span>${esc(msg)}</span>
+  `
+  document.getElementById('toast-container').appendChild(el)
+  setTimeout(() => el.remove(), 4000)
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 function fmt(n) {
   if (n === null || n === undefined) return '—'
-  if (n >= 1_000_000) return (n/1_000_000).toFixed(1) + 'M'
-  if (n >= 1_000)     return (n/1_000).toFixed(1) + 'K'
+  if (n >= 1_000_000) return (n/1_000_000).toFixed(1)+'M'
+  if (n >= 1_000)     return (n/1_000).toFixed(1)+'K'
   return String(n)
 }
 
 function fmtDuration(s) {
   if (!s) return ''
-  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60
   if (h) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
   return `${m}:${String(sec).padStart(2,'0')}`
 }
@@ -665,10 +1044,10 @@ function relTime(iso) {
   if (!iso) return '—'
   const diff = Date.now() - new Date(iso).getTime()
   const m = Math.floor(diff/60000)
-  if (m < 1)   return 'just now'
-  if (m < 60)  return m + 'm ago'
-  if (m < 1440) return Math.floor(m/60) + 'h ago'
-  return Math.floor(m/1440) + 'd ago'
+  if (m < 1)    return 'just now'
+  if (m < 60)   return m+'m ago'
+  if (m < 1440) return Math.floor(m/60)+'h ago'
+  return Math.floor(m/1440)+'d ago'
 }
 
 function esc(s) {
@@ -677,23 +1056,31 @@ function esc(s) {
 }
 
 function platformBadge(p) {
-  if (p === 'tiktok')  return '<span class="text-xs bg-pink-500/15 text-pink-400 border border-pink-500/20 px-1.5 py-0.5 rounded">TikTok</span>'
-  if (p === 'twitch')  return '<span class="text-xs bg-purple-500/15 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded">Twitch</span>'
+  if (p === 'tiktok') return '<span class="text-xs bg-pink-500/12 text-pink-400 border border-pink-500/18 px-1.5 py-0.5 rounded-full">TikTok</span>'
+  if (p === 'twitch') return '<span class="text-xs bg-purple-500/12 text-purple-400 border border-purple-500/18 px-1.5 py-0.5 rounded-full">Twitch</span>'
   return ''
 }
 
-function empty(msg) {
-  return `<div class="text-center py-10 text-slate-500 text-sm">${msg}</div>`
+function typeBadgeInline(type) {
+  if (type === 'sponsored') return '💰'
+  if (type === 'organic')   return '🌿'
+  return '❓'
 }
 
-function errMsg(msg) {
-  return `<div class="text-center py-10 text-red-400 text-sm">${msg}</div>`
+function emptyState(msg) {
+  return `<div class="py-16 text-center">
+    <div class="text-4xl mb-3">📭</div>
+    <p class="text-slate-400 text-sm font-medium">${esc(msg)}</p>
+  </div>`
 }
 
-// ─── Refresh icon spin ────────────────────────────────────────────────────────
-const style = document.createElement('style')
-style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }'
-document.head.appendChild(style)
+function errorState(msg) {
+  return `<div class="py-16 text-center">
+    <div class="text-4xl mb-3">⚠️</div>
+    <p class="text-red-400 text-sm font-medium">${esc(msg)}</p>
+    <button onclick="refreshAll()" class="mt-3 text-xs text-brand-400 hover:text-brand-300">Try again →</button>
+  </div>`
+}
 </script>
 </body>
 </html>

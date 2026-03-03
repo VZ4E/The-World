@@ -18,6 +18,8 @@
 const { getSupabase } = require('../../lib/supabase')
 const { extractBrands } = require('../../lib/claude')
 const { sendMentionAlert } = require('../../lib/discord')
+const { sendEmailAlert }   = require('../../lib/resend')
+const { sendSlackAlert }   = require('../../lib/slack')
 
 const BATCH_SIZE = 20
 const VALID_MENTION_TYPES = new Set(['sponsored', 'organic', 'unknown'])
@@ -100,7 +102,7 @@ module.exports = async function handler(req, res) {
         .update({
           analysis_status: 'completed',
           analysis_model: model,
-          analysis_input_tokens: input_tokens,
+          analysis_prompt_tokens: input_tokens,   // schema column: analysis_prompt_tokens
           analysis_output_tokens: output_tokens,
           analyzed_at: new Date().toISOString(),
           error_message: null,
@@ -135,8 +137,11 @@ module.exports = async function handler(req, res) {
 
         summary.total_mentions += mentions.length
 
-        // Fire-and-forget Discord alert for sponsored / high-confidence organic
+        // Fire-and-forget alerts — Discord, email (Resend), and Slack
+        // All three run in parallel; failures are logged but never rethrow.
         sendMentionAlert(mentionRows, video, creatorInfo)
+        sendEmailAlert(mentionRows, video, creatorInfo)
+        sendSlackAlert(mentionRows, video, creatorInfo)
       }
 
       summary.videos_analyzed++

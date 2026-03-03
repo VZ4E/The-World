@@ -29,6 +29,24 @@ module.exports = async function handler(req, res) {
 
   console.log(`[check-transcriptions] Poll started at ${runStarted}`)
 
+  // ── Recover stuck jobs (processing > 2h with no assemblyai_transcript_id) ──
+  // These were likely locked by a crashed function invocation.
+  const stuckCutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+  const { data: stuck } = await supabase
+    .from('videos')
+    .select('id')
+    .eq('transcription_status', 'processing')
+    .is('assemblyai_transcript_id', null)
+    .lt('updated_at', stuckCutoff)
+
+  if (stuck?.length) {
+    console.warn(`[check-transcriptions] Resetting ${stuck.length} stuck job(s) to pending`)
+    await supabase
+      .from('videos')
+      .update({ transcription_status: 'pending', error_message: 'Reset: stuck in processing >2h without transcript ID' })
+      .in('id', stuck.map(v => v.id))
+  }
+
   // ── Load processing videos ─────────────────────────────────────────────────
   const { data: videos, error } = await supabase
     .from('videos')
