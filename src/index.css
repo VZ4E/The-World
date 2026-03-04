@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg:      #080a0e;
+    --s1:      #0d0f14;
+    --s2:      #13161d;
+    --s3:      #1a1e28;
+    --border:  #222736;
+    --brand:   #4f74f3;
+    --deal:    #fb923c;
+    --text:    #e2e8f0;
+    --muted:   #64748b;
+    --subtle:  #94a3b8;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Switzer', system-ui, sans-serif;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2c3347; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #394057; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-white text-[15px] overflow-hidden;
+    background: linear-gradient(135deg, #FF3300, #EE7926);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-primary:hover { transform: scale(1.04); }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    pointer-events: none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-[15px] text-gray-900 backdrop-blur-sm;
+    background: rgba(255,255,255,0.92);
+    border: 1.5px solid rgba(0,0,0,0.05);
+    transition: transform 0.15s, background 0.15s;
+  }
+  .btn-secondary:hover { transform: scale(1.04); background: white; }
+
+  .card {
+    @apply bg-[var(--s2)] border border-[var(--border)] rounded-2xl;
+  }
+
+  .badge-deal {
+    @apply text-xs font-semibold px-2 py-0.5 rounded-md;
+    background: rgba(251,146,60,0.15);
+    color: #fb923c;
+    border: 1px solid rgba(251,146,60,0.3);
+  }
+}
