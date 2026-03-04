@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Respawn Signal — Deal Intelligence for Gaming Agencies</title>
+  <meta name="description" content="Know every sponsorship deal your competitors are signing — before the ink dries. Real-time brand deal intelligence across TikTok, Twitch, and YouTube." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:    #4f74f3;
+      --brand-lt: #7b9ef8;
+      --deal:     #fb923c;
+      --deal-lt:  #fdba74;
+      --bg:       #080a0e;
+      --s1:       #0d0f14;
+      --s2:       #13161d;
+      --s3:       #1a1e28;
+      --border:   #222736;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --subtle:   #94a3b8;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+    /* ── Utilities ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .tag { display: inline-block; background: rgba(251,146,60,.13); color: var(--deal-lt); border: 1px solid rgba(251,146,60,.28); padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .tag-blue { background: rgba(79,116,243,.13); color: var(--brand-lt); border-color: rgba(79,116,243,.28); }
+    .btn-primary { display: inline-block; background: var(--brand); color: #fff; font-weight: 600; font-size: 15px; padding: 13px 28px; border-radius: 12px; text-decoration: none; border: none; cursor: pointer; transition: background .15s, transform .1s; }
+    .btn-primary:hover { background: #3a5ce8; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-ghost { display: inline-block; background: transparent; color: var(--subtle); font-weight: 500; font-size: 15px; padding: 13px 24px; border-radius: 12px; text-decoration: none; border: 1px solid var(--border); cursor: pointer; transition: border-color .15s, color .15s; }
+    .btn-ghost:hover { border-color: #394057; color: var(--text); }
+
+    /* ── Nav ── */
+    nav { position: sticky; top: 0; z-index: 50; background: rgba(8,10,14,.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-mark { width: 32px; height: 32px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12px; letter-spacing: -.5px; flex-shrink: 0; }
+    .logo-text { color: #fff; font-weight: 700; font-size: 16px; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    @media (max-width: 640px) { .nav-links .btn-ghost { display: none; } }
+
+    /* ── Hero ── */
+    .hero { padding: 96px 0 72px; text-align: center; }
+    .hero h1 { font-size: clamp(36px, 6vw, 68px); font-weight: 800; line-height: 1.08; letter-spacing: -.03em; margin: 20px 0 24px; color: #fff; }
+    .hero h1 em { font-style: normal; background: linear-gradient(90deg, #fb923c, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: clamp(16px, 2.2vw, 20px); color: var(--subtle); max-width: 600px; margin: 0 auto 40px; }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .hero-note { font-size: 13px; color: var(--muted); margin-top: 18px; }
+
+    /* ── Live deal card ── */
+    .deal-card { background: var(--s2); border: 1px solid var(--border); border-left: 3px solid var(--deal); border-radius: 16px; padding: 20px; max-width: 620px; margin: 44px auto 0; text-align: left; }
+    .deal-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .deal-creator { display: flex; align-items: center; gap: 10px; }
+    .deal-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #f97316, #fb923c); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+    .deal-name { font-size: 14px; font-weight: 600; color: #fff; }
+    .deal-platform { font-size: 12px; color: var(--muted); }
+    .deal-live { font-size: 11px; color: #34d399; background: rgba(52,211,153,.1); padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+    .deal-brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .deal-brand-name { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.01em; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .badge-deal { background: rgba(251,146,60,.15); color: #fb923c; border: 1px solid rgba(251,146,60,.35); }
+    .badge-pos { background: rgba(52,211,153,.1); color: #34d399; }
+    .deal-snippet { font-size: 13px; color: var(--subtle); border-left: 2px solid var(--deal); padding-left: 12px; line-height: 1.6; }
+    .deal-conf { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+    .conf-bar { flex: 1; height: 3px; background: var(--s3); border-radius: 2px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #fb923c, #f97316); width: 94%; }
+    .conf-label { font-size: 12px; color: var(--muted); font-family: monospace; }
+
+    /* ── Ticker ── */
+    .ticker-wrap { overflow: hidden; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--s1); padding: 10px 0; margin: 40px 0 0; mask: linear-gradient(90deg, transparent, #000 80px, #000 calc(100% - 80px), transparent); }
+    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker 35s linear infinite; width: max-content; }
+    .ticker-track:hover { animation-play-state: paused; }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .ticker-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 28px; font-size: 13px; color: var(--subtle); }
+    .ticker-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--deal); display: inline-block; opacity: .8; }
+
+    /* ── Sections ── */
+    .section { padding: 80px 0; }
+    .divider { height: 1px; background: var(--border); }
+    .section-head { text-align: center; margin-bottom: 56px; }
+    .section-head h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; color: #fff; letter-spacing: -.025em; margin-top: 12px; }
+    .section-head p { color: var(--subtle); font-size: 17px; max-width: 520px; margin: 12px auto 0; }
+
+    /* ── How it works ── */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+    .step { background: var(--s2); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; }
+    .step-num { width: 36px; height: 36px; background: rgba(251,146,60,.15); border: 1px solid rgba(251,146,60,.3); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--deal); font-weight: 700; font-size: 15px; margin-bottom: 16px; }
+    .step h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--subtle); line-height: 1.55; }
+
+    /* ── Use cases ── */
+    .use-cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .use-case { background: var(--s2); border: 1px solid var(--border); border-left: 3px solid var(--deal); border-radius: 16px; padding: 28px 24px; transition: border-color .2s, box-shadow .2s; }
+    .use-case:hover { box-shadow: 0 0 0 1px rgba(251,146,60,.2), 0 8px 32px rgba(251,146,60,.07); }
+    .use-case-icon { font-size: 28px; margin-bottom: 14px; }
+    .use-case h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .use-case p { font-size: 14px; color: var(--subtle); line-height: 1.6; }
+
+    /* ── Deal feed preview ── */
+    .feed-preview { background: var(--s2); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; max-width: 720px; margin: 0 auto; }
+    .feed-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .feed-title { font-size: 14px; font-weight: 600; color: #fff; }
+    .feed-live { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #34d399; margin-left: auto; }
+    .feed-dot { width: 5px; height: 5px; border-radius: 50%; background: #34d399; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+    .feed-row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); transition: background .15s; }
+    .feed-row:last-child { border-bottom: none; }
+    .feed-row:hover { background: rgba(255,255,255,.02); }
+    .feed-row-left { flex: 1; min-width: 0; }
+    .feed-row-brand { font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+    .feed-row-meta { font-size: 12px; color: var(--muted); }
+    .feed-row-conf { text-align: right; }
+    .feed-row-conf-pct { font-size: 14px; font-weight: 700; color: #fb923c; }
+    .feed-row-conf-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* ── Pricing ── */
+    .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
+    .plan { background: var(--s2); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; position: relative; }
+    .plan.featured { border-color: var(--brand); background: linear-gradient(180deg, rgba(79,116,243,.07) 0%, var(--s2) 100%); }
+    .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--brand); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 99px; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+    .plan-name { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .plan-price { font-size: 44px; font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1; margin-bottom: 4px; }
+    .plan-price span { font-size: 18px; font-weight: 500; color: var(--muted); }
+    .plan-desc { font-size: 14px; color: var(--subtle); margin: 12px 0 24px; }
+    .plan-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
+    .plan-features li { font-size: 14px; color: var(--subtle); display: flex; gap: 10px; align-items: flex-start; }
+    .plan-features li::before { content: "✓"; color: #34d399; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── CTA ── */
+    .cta-band { background: linear-gradient(135deg, rgba(251,146,60,.1) 0%, rgba(79,116,243,.06) 100%); border: 1px solid rgba(251,146,60,.2); border-radius: 24px; padding: 64px 40px; text-align: center; margin: 80px 0; }
+    .cta-band h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; color: #fff; letter-spacing: -.025em; margin-bottom: 16px; }
+    .cta-band p { font-size: 17px; color: var(--subtle); max-width: 500px; margin: 0 auto 36px; }
+    .access-form { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .access-input { flex: 1; min-width: 240px; max-width: 340px; background: var(--s2); border: 1px solid var(--border); color: var(--text); padding: 13px 18px; border-radius: 12px; font-size: 15px; font-family: inherit; outline: none; transition: border-color .15s; }
+    .access-input:focus { border-color: rgba(79,116,243,.5); }
+    .access-input::placeholder { color: var(--muted); }
+
+    /* ── Footer ── */
+    footer { border-top: 1px solid var(--border); padding: 32px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .hero > * { animation: fadeUp .5s ease both; }
+    .hero .tag { animation-delay: 0s; }
+    .hero h1 { animation-delay: .07s; }
+    .hero p { animation-delay: .14s; }
+    .hero-cta { animation-delay: .2s; }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="container nav-inner">
+    <a href="/" class="logo">
+      <div class="logo-mark">RS</div>
+      <span class="logo-text">Respawn Signal</span>
+    </a>
+    <div class="nav-links">
+      <a href="#pricing" class="btn-ghost" style="font-size:14px;padding:9px 18px">Pricing</a>
+      <a href="#access" class="btn-primary" style="font-size:14px;padding:9px 20px">Request Access</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <span class="tag">Competitive Deal Intelligence</span>
+    <h1>Know every deal<br />your competition signs.<br /><em>Before they cash the check.</em></h1>
+    <p>Respawn Signal monitors competitor-managed creators on TikTok, Twitch, and YouTube — detecting every brand sponsorship deal in real time, so your agency can pitch first.</p>
+    <div class="hero-cta">
+      <a href="#access" class="btn-primary">Request Early Access</a>
+      <a href="/dashboard" class="btn-ghost">View Demo Dashboard</a>
+    </div>
+    <p class="hero-note">Built for gaming creator agencies. Every deal your competitors sign is a pitch opportunity you already know about.</p>
+
+    <!-- Live deal card -->
+    <div class="deal-card">
+      <div class="deal-card-header">
+        <div class="deal-creator">
+          <div class="deal-avatar">TK</div>
+          <div>
+            <div class="deal-name">@topkreator</div>
+            <div class="deal-platform">TikTok · Competitor Roster · 4 min ago</div>
+          </div>
+        </div>
+        <span class="deal-live">● LIVE</span>
+      </div>
+      <div class="deal-brand">
+        <span class="deal-brand-name">G FUEL</span>
+        <span class="badge badge-deal">💰 Sponsored Deal</span>
+        <span class="badge badge-pos">✅ Positive</span>
+      </div>
+      <div class="deal-snippet">"Honestly this G FUEL collab flavor is actually insane, like not even an ad read insane — I would actually drink this every day"</div>
+      <div class="deal-conf">
+        <div class="conf-bar"><div class="conf-fill"></div></div>
+        <span class="conf-label">94% deal confidence</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticker -->
+  <div class="ticker-wrap" style="margin-top:44px">
+    <div class="ticker-track">
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Razer deal · @fps_legend · 2h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 G FUEL deal · @topkreator · 4h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 NordVPN deal · @grindset_clips · 6h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Secretlab deal · @couch_warrior · 8h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Monster Energy deal · @nightowl_gg · 10h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 HyperX deal · @react_king · 12h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Corsair deal · @pcbuilder · 14h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Discord Nitro deal · @duo_stack · 16h ago</span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Razer deal · @fps_legend · 2h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 G FUEL deal · @topkreator · 4h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 NordVPN deal · @grindset_clips · 6h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Secretlab deal · @couch_warrior · 8h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Monster Energy deal · @nightowl_gg · 10h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 HyperX deal · @react_king · 12h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Corsair deal · @pcbuilder · 14h ago</span>
+      <span class="ticker-item"><span class="ticker-dot"></span>💰 Discord Nitro deal · @duo_stack · 16h ago</span>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="tag">How It Works</span>
+      <h2>Automated deal tracking.<br />Zero manual research.</h2>
+      <p>Add competitor-managed creators. We watch every video. Every deal gets flagged.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Add competitor creators</h3>
+        <p>Tell us which creators your competitors manage. We continuously monitor their TikTok, Twitch, and YouTube content.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>AI transcribes every video</h3>
+        <p>Every new video is transcribed automatically — capturing every word, including ad reads, shoutouts, and sponsor integrations.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Deals get classified instantly</h3>
+        <p>Our AI distinguishes paid sponsorships from organic mentions with 90%+ accuracy. Every deal is logged with brand, creator, platform, and confidence score.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Your pitch list updates automatically</h3>
+        <p>Your Opportunities board fills with brands actively spending on competitor talent. You see it. You pitch it. You sign it first.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Use cases -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="tag">Built For Agencies</span>
+      <h2>The edge every agency<br />needs but none have had.</h2>
+    </div>
+    <div class="use-cases">
+      <div class="use-case">
+        <div class="use-case-icon">🎯</div>
+        <h3>Pitch brands before the deal expires</h3>
+        <p>Sponsorships are typically 3–6 month cycles. When a competitor's creator closes a NordVPN deal, you have a window to pitch NordVPN on your talent before renewal.</p>
+      </div>
+      <div class="use-case">
+        <div class="use-case-icon">📊</div>
+        <h3>Understand brand spending patterns</h3>
+        <p>See which brands are actively spending across multiple creators, which are one-offs, and which are scaling campaigns. Prioritise your pitches accordingly.</p>
+      </div>
+      <div class="use-case">
+        <div class="use-case-icon">⚡</div>
+        <h3>Real-time deal alerts</h3>
+        <p>Get Discord, Slack, and email alerts the moment a competitor-managed creator closes a sponsored deal. Know within hours, not weeks.</p>
+      </div>
+      <div class="use-case">
+        <div class="use-case-icon">📺</div>
+        <h3>Full platform coverage</h3>
+        <p>TikTok, Twitch, and YouTube in one dashboard. If a creator drops a sponsored video, we catch it — regardless of which platform they chose.</p>
+      </div>
+      <div class="use-case">
+        <div class="use-case-icon">🔍</div>
+        <h3>Proof for your pitch deck</h3>
+        <p>Walk into a brand meeting with data: "Brand X has paid 6 creators managed by competitors in the last 30 days. Here's what they're getting for the spend."</p>
+      </div>
+      <div class="use-case">
+        <div class="use-case-icon">📈</div>
+        <h3>Weekly intelligence reports</h3>
+        <p>Every Monday: a full digest of competitor deals, brand spending trends, and new opportunities — delivered to your inbox automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Deal feed preview -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="tag-blue tag">Deal Feed Preview</span>
+      <h2>Every deal. Every creator.<br />All in one feed.</h2>
+      <p>Your dashboard updates in real time as deals are detected. Filter by brand, platform, or date range.</p>
+    </div>
+    <div class="feed-preview">
+      <div class="feed-header">
+        <span class="feed-title">Deal Feed</span>
+        <span style="font-size:12px;color:var(--muted)">Competitor creators · Sponsored only</span>
+        <div class="feed-live"><span class="feed-dot"></span> Live</div>
+      </div>
+      <div class="feed-row">
+        <div class="feed-row-left">
+          <div class="feed-row-brand">G FUEL <span class="badge badge-deal" style="font-size:10px;padding:2px 7px">💰 Sponsored</span> <span style="font-size:11px;background:rgba(236,72,153,.1);color:#f472b6;padding:2px 7px;border-radius:5px;font-weight:600">TikTok</span></div>
+          <div class="feed-row-meta">@topkreator · "Honestly this G FUEL collab flavor is actually insane…" · 4h ago</div>
+        </div>
+        <div class="feed-row-conf"><div class="feed-row-conf-pct">94%</div><div class="feed-row-conf-label">confidence</div></div>
+      </div>
+      <div class="feed-row">
+        <div class="feed-row-left">
+          <div class="feed-row-brand">NordVPN <span class="badge badge-deal" style="font-size:10px;padding:2px 7px">💰 Sponsored</span> <span style="font-size:11px;background:rgba(168,85,247,.1);color:#a78bfa;padding:2px 7px;border-radius:5px;font-weight:600">Twitch</span></div>
+          <div class="feed-row-meta">@grindset_clips · "Before we get into it, huge shoutout to NordVPN for sponsoring today…" · 6h ago</div>
+        </div>
+        <div class="feed-row-conf"><div class="feed-row-conf-pct">97%</div><div class="feed-row-conf-label">confidence</div></div>
+      </div>
+      <div class="feed-row">
+        <div class="feed-row-left">
+          <div class="feed-row-brand">Razer <span class="badge badge-deal" style="font-size:10px;padding:2px 7px">💰 Sponsored</span> <span style="font-size:11px;background:rgba(236,72,153,.1);color:#f472b6;padding:2px 7px;border-radius:5px;font-weight:600">TikTok</span></div>
+          <div class="feed-row-meta">@fps_legend · "I've been rocking this Razer setup for a month now, full send on the sponsorship…" · 8h ago</div>
+        </div>
+        <div class="feed-row-conf"><div class="feed-row-conf-pct">91%</div><div class="feed-row-conf-label">confidence</div></div>
+      </div>
+      <div class="feed-row">
+        <div class="feed-row-left">
+          <div class="feed-row-brand">Secretlab <span class="badge badge-deal" style="font-size:10px;padding:2px 7px">💰 Sponsored</span> <span style="font-size:11px;background:rgba(168,85,247,.1);color:#a78bfa;padding:2px 7px;border-radius:5px;font-weight:600">Twitch</span></div>
+          <div class="feed-row-meta">@couch_warrior · "Secretlab sent me this chair and honestly it's unreal — code COUCH for 10% off…" · 10h ago</div>
+        </div>
+        <div class="feed-row-conf"><div class="feed-row-conf-pct">98%</div><div class="feed-row-conf-label">confidence</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Pricing -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="section-head">
+      <span class="tag">Pricing</span>
+      <h2>Pay for the intel<br />you actually use.</h2>
+      <p>Priced per creator roster size. Add more competitors, get more deal intelligence.</p>
+    </div>
+    <div class="pricing">
+      <div class="plan">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">$249<span>/mo</span></div>
+        <div class="plan-desc">For boutique agencies monitoring a focused set of competitor creators.</div>
+        <ul class="plan-features">
+          <li>Up to 10 competitor creators tracked</li>
+          <li>TikTok + Twitch + YouTube</li>
+          <li>Real-time Discord &amp; email deal alerts</li>
+          <li>Deal feed + Brand Radar dashboard</li>
+          <li>Weekly intelligence digest</li>
+          <li>CSV export</li>
+        </ul>
+        <a href="#access" class="btn-ghost" style="width:100%;text-align:center">Request Access</a>
+      </div>
+      <div class="plan featured">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-name">Agency</div>
+        <div class="plan-price">$599<span>/mo</span></div>
+        <div class="plan-desc">For mid-size agencies running active competitive intelligence across multiple niches.</div>
+        <ul class="plan-features">
+          <li>Up to 40 competitor creators tracked</li>
+          <li>TikTok + Twitch + YouTube</li>
+          <li>Discord, Slack &amp; email deal alerts</li>
+          <li>Full dashboard + Opportunities board</li>
+          <li>Weekly PDF brand intelligence report</li>
+          <li>CSV export + deal trend charts</li>
+          <li>Custom alert thresholds per brand</li>
+        </ul>
+        <a href="#access" class="btn-primary" style="width:100%;text-align:center">Request Access</a>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price">$1,499<span>/mo</span></div>
+        <div class="plan-desc">For large agencies managing dozens of brands and needing full market coverage.</div>
+        <ul class="plan-features">
+          <li>Unlimited competitor creators</li>
+          <li>All platforms</li>
+          <li>Multi-brand client portals</li>
+          <li>White-label weekly reports</li>
+          <li>Dedicated Slack channel</li>
+          <li>API access for your own tools</li>
+          <li>Custom creator onboarding support</li>
+        </ul>
+        <a href="#access" class="btn-ghost" style="width:100%;text-align:center">Request Access</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="container">
+  <div class="cta-band" id="access">
+    <span class="tag">Early Access</span>
+    <h2>Your competitors are signing deals.<br />Do you know which ones?</h2>
+    <p>Request early access. We onboard agencies one at a time to make sure the intelligence is clean before you act on it.</p>
+    <form class="access-form" onsubmit="submitAccess(event)">
+      <input id="access-email" type="email" class="access-input" placeholder="Your work email" required autocomplete="email" />
+      <button type="submit" class="btn-primary">Request Access</button>
+    </form>
+    <p id="access-msg" style="display:none;margin-top:16px;font-size:14px;color:#34d399;font-weight:500">Got it — we will reach out within 24 hours.</p>
+    <p style="font-size:13px;color:var(--muted);margin-top:16px">No spam. No auto-trials. We reach out directly.</p>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="container footer-inner">
+    <a href="/" class="logo">
+      <div class="logo-mark" style="width:24px;height:24px;font-size:10px">RS</div>
+      <span class="logo-text" style="font-size:14px">Respawn Signal</span>
+    </a>
+    <span class="footer-copy">© 2026 Respawn Signal. Deal intelligence for gaming creator agencies.</span>
+    <a href="/dashboard" style="font-size:13px;color:var(--muted);text-decoration:none">Dashboard →</a>
+  </div>
+</footer>
+
+<script>
+function submitAccess(e) {
+  e.preventDefault()
+  console.log('Access request:', document.getElementById('access-email').value)
+  document.getElementById('access-email').value = ''
+  document.querySelector('.access-form').style.display = 'none'
+  document.getElementById('access-msg').style.display = 'block'
+}
+</script>
+</body>
+</html>

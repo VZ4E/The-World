@@ -55,7 +55,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/",           "destination": "/public/index.html" },
+    { "source": "/",           "destination": "/public/landing.html" },
     { "source": "/dashboard",  "destination": "/public/index.html" }
   ]
 }
