@@ -33,7 +33,7 @@
     "slash_commands": [
       {
         "command": "/agent",
-        "url": "https://YOUR_VERCEL_URL/api/slack/slash",
+        "url": "https://the-world-2q2emtluc-project-signal.vercel.app/api/slack/slash",
         "description": "Talk to a Respawn Signal specialist agent",
         "usage_hint": "[agent-name] your message  |  help",
         "should_escape": false
@@ -42,7 +42,7 @@
   },
   "oauth_config": {
     "redirect_urls": [
-      "https://YOUR_VERCEL_URL/api/slack/oauth"
+      "https://the-world-2q2emtluc-project-signal.vercel.app/api/slack/oauth"
     ],
     "scopes": {
       "bot": [
@@ -63,7 +63,7 @@
   },
   "settings": {
     "event_subscriptions": {
-      "request_url": "https://YOUR_VERCEL_URL/api/slack/events",
+      "request_url": "https://the-world-2q2emtluc-project-signal.vercel.app/api/slack/events",
       "bot_events": [
         "app_mention",
         "message.im"
