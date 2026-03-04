@@ -1,0 +1,79 @@
+{
+  "_comment": [
+    "Respawn Signal — Slack App Manifest",
+    "",
+    "SETUP INSTRUCTIONS (one-time, ~3 minutes):",
+    "",
+    "1. Go to https://api.slack.com/apps",
+    "2. Click 'Create New App' → 'From an app manifest'",
+    "3. Select workspace: respawnmedia",
+    "4. Paste this entire JSON file",
+    "5. Review and click 'Create'",
+    "6. Go to 'OAuth & Permissions' → 'Install to Workspace' → allow",
+    "7. Copy the Bot User OAuth Token (xoxb-...) → set as SLACK_BOT_TOKEN in Vercel",
+    "8. Go to 'Basic Information' → 'App Credentials' → copy Signing Secret → set as SLACK_SIGNING_SECRET in Vercel",
+    "9. Done — /agent works immediately in any channel"
+  ],
+  "display_information": {
+    "name": "Respawn Signal",
+    "description": "Talk to any specialist agent from Slack. /agent [agent-name] your message",
+    "background_color": "#0f0f0f",
+    "long_description": "Respawn Signal Agent Studio brings your 12 specialist AI agents directly into Slack.\n\nUse /agent to route any question to the right expert — backend, security, data engineering, LLM architecture, prompt engineering, and more. Agents can consult each other and post live updates in threads.\n\nAvailable agents:\n• agent-organizer — orchestrates multi-agent teams\n• task-decomposition-expert — breaks down complex goals\n• senior-backend — Node.js, Go, Python, APIs, databases\n• frontend-developer — React, Vue, Angular, real-time UI\n• data-engineer — pipelines, ETL/ELT, data infrastructure\n• llm-architect — LLM systems, RAG, fine-tuning, inference\n• prompt-engineer — prompt design, optimization, evaluation\n• model-evaluator — model selection, benchmarking, cost\n• security-engineer — security architecture, compliance\n• error-detective — root cause analysis, error patterns\n• search-specialist — web research, fact verification\n• report-generator — research synthesis, structured reports"
+  },
+  "features": {
+    "app_home": {
+      "home_tab_enabled": true,
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": false
+    },
+    "bot_user": {
+      "display_name": "Respawn Signal",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/agent",
+        "url": "https://YOUR_VERCEL_URL/api/slack/slash",
+        "description": "Talk to a Respawn Signal specialist agent",
+        "usage_hint": "[agent-name] your message  |  help",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "redirect_urls": [
+      "https://YOUR_VERCEL_URL/api/slack/oauth"
+    ],
+    "scopes": {
+      "bot": [
+        "app_mentions:read",
+        "channels:history",
+        "channels:join",
+        "chat:write",
+        "chat:write.customize",
+        "commands",
+        "groups:history",
+        "im:history",
+        "im:read",
+        "im:write",
+        "mpim:history",
+        "users:read"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://YOUR_VERCEL_URL/api/slack/events",
+      "bot_events": [
+        "app_mention",
+        "message.im"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": false
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}
