@@ -17,7 +17,9 @@
     "api/dashboard/brands.js":         { "maxDuration": 10 },
     "api/dashboard/creators.js":       { "maxDuration": 10 },
     "api/dashboard/pipeline.js":       { "maxDuration": 10 },
-    "api/report/weekly.js":            { "maxDuration": 30 }
+    "api/report/weekly.js":            { "maxDuration": 30 },
+    "api/slack/slash.js":              { "maxDuration": 60 },
+    "api/slack/events.js":             { "maxDuration": 60 }
   },
   "headers": [
     {

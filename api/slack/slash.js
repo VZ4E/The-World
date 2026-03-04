@@ -90,21 +90,27 @@ module.exports = async function handler(req, res) {
   }
 
   const { agentId, message } = parseAgent(text)
+  const sessionId = `slack-${user_id || 'anon'}-${Date.now()}`
 
-  // Acknowledge immediately (Slack requires response within 3 seconds)
+  // Acknowledge immediately — Slack requires a response within 3 seconds.
+  // We then run the agent synchronously within the same function invocation,
+  // posting the final result to response_url (valid for 30 minutes).
   res.json({
     response_type: 'in_channel',
     text: `_Routing to *${agentId}*…_`,
   })
 
-  // Continue processing after response is sent (Vercel keeps the function alive)
-  const sessionId = `slack-${user_id || 'anon'}-${Date.now()}`
-
-  await runAgentForSlack({
-    agentId,
-    message,
-    channelId: channel_id,
-    responseUrl: response_url,
-    sessionId,
-  }).catch((err) => console.error('[slack/slash] background error:', err.message))
+  // Run agent — Vercel keeps the function alive for maxDuration after res is sent
+  // so long as there is pending async work in the same invocation.
+  try {
+    await runAgentForSlack({
+      agentId,
+      message,
+      channelId: channel_id,
+      responseUrl: response_url,
+      sessionId,
+    })
+  } catch (err) {
+    console.error('[slack/slash] agent error:', err.message)
+  }
 }
