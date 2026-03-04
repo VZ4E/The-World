@@ -16,7 +16,8 @@
     "api/dashboard/mentions.js":       { "maxDuration": 10 },
     "api/dashboard/brands.js":         { "maxDuration": 10 },
     "api/dashboard/creators.js":       { "maxDuration": 10 },
-    "api/dashboard/pipeline.js":       { "maxDuration": 10 }
+    "api/dashboard/pipeline.js":       { "maxDuration": 10 },
+    "api/report/weekly.js":            { "maxDuration": 30 }
   },
   "headers": [
     {
@@ -45,6 +46,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/dashboard", "destination": "/dashboard.html" }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)",     "destination": "/index.html" }
   ]
 }
