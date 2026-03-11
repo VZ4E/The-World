@@ -3,20 +3,26 @@
  *
  * Vercel cron job — runs daily at 06:10 UTC (10 min after fetch-videos).
  *
- * Finds all videos with transcription_status = 'pending' and submits them
- * to AssemblyAI for transcription. The job is async — AssemblyAI processes
- * in the background and check-transcriptions.js polls for completion.
+ * Finds all videos with transcription_status = 'pending' and transcribes them
+ * via Transcript24 (https://www.transcript24.com/transcript-api).
+ *
+ * Unlike the previous AssemblyAI flow, Transcript24 is synchronous — the
+ * transcript is returned in a single request, so no separate polling job
+ * is needed. check-transcriptions.js is no longer used.
+ *
+ * Transcript24 accepts public TikTok share URLs directly, which is exactly
+ * what we store in video_url from the RapidAPI fetcher.
  *
  * Retry logic:
- *   - On submit failure: increment retry_count, keep status 'pending'
+ *   - On failure: increment retry_count, keep status 'pending'
  *   - After 3 failures: set status 'failed' so the video is skipped
  */
 
 const { getSupabase } = require('../../lib/supabase')
-const { submitTranscription } = require('../../lib/assemblyai')
+const { transcribeVideo } = require('../../lib/transcript24')
 
 const MAX_RETRIES = 3
-const BATCH_SIZE = 50 // max videos to submit per run
+const BATCH_SIZE = 20 // keep within Vercel's 300s function timeout
 
 module.exports = async function handler(req, res) {
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -33,10 +39,10 @@ module.exports = async function handler(req, res) {
   // ── Load pending videos ────────────────────────────────────────────────────
   const { data: videos, error } = await supabase
     .from('videos')
-    .select('id, video_url, platform, title, retry_count')
+    .select('id, video_url, retry_count')
     .eq('transcription_status', 'pending')
     .not('video_url', 'is', null)
-    .lt('retry_count', MAX_RETRIES) // skip already-maxed-out videos
+    .lt('retry_count', MAX_RETRIES)
     .order('published_at', { ascending: false })
     .limit(BATCH_SIZE)
 
@@ -45,46 +51,42 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: error.message })
   }
 
-  console.log(`[transcribe-videos] Submitting ${videos.length} videos to AssemblyAI`)
+  console.log(`[transcribe-videos] Transcribing ${videos.length} videos via Transcript24`)
 
   const summary = {
     run_started_at: runStarted,
     total_pending: videos.length,
-    submitted: 0,
+    completed: 0,
     failed: 0,
     errors: [],
   }
 
-  // ── Submit each video ──────────────────────────────────────────────────────
+  // ── Transcribe each video ──────────────────────────────────────────────────
   for (const video of videos) {
     try {
-      // Mark as 'processing' before submitting to prevent double-submission
-      // if this function is retried or runs concurrently.
-      const { error: lockError } = await supabase
-        .from('videos')
-        .update({ transcription_status: 'processing' })
-        .eq('id', video.id)
-        .eq('transcription_status', 'pending') // optimistic lock
+      const { text, captions, taskCredits } = await transcribeVideo(video.video_url)
 
-      if (lockError) throw new Error(`Lock failed: ${lockError.message}`)
-
-      // Submit to AssemblyAI
-      const transcript = await submitTranscription(video.video_url)
-
-      // Store the AssemblyAI transcript ID so check-transcriptions.js can poll it
       const { error: updateError } = await supabase
         .from('videos')
-        .update({ assemblyai_transcript_id: transcript.id })
+        .update({
+          transcription_status: 'completed',
+          transcript_text:      text,
+          transcript_words_json: captions,  // [{ start_time, end_time, text }, ...]
+          transcribed_at:       new Date().toISOString(),
+          error_message:        null,
+          // analysis_status remains 'pending' — analyze-mentions.js picks it up
+        })
         .eq('id', video.id)
 
-      if (updateError) throw new Error(`ID save failed: ${updateError.message}`)
+      if (updateError) throw new Error(`DB update failed: ${updateError.message}`)
 
-      summary.submitted++
+      summary.completed++
       console.log(
-        `[transcribe-videos] Submitted video ${video.id} → AssemblyAI ${transcript.id}`
+        `[transcribe-videos] Completed video ${video.id} ` +
+        `(${captions.length} captions, ${taskCredits ?? '?'} credits used)`
       )
     } catch (err) {
-      console.error(`[transcribe-videos] Failed to submit video ${video.id}:`, err.message)
+      console.error(`[transcribe-videos] Failed video ${video.id}:`, err.message)
 
       const retryCount = (video.retry_count ?? 0) + 1
       const newStatus = retryCount >= MAX_RETRIES ? 'failed' : 'pending'
@@ -93,8 +95,8 @@ module.exports = async function handler(req, res) {
         .from('videos')
         .update({
           transcription_status: newStatus,
-          retry_count: retryCount,
-          error_message: err.message,
+          retry_count:          retryCount,
+          error_message:        err.message,
         })
         .eq('id', video.id)
 
