@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Loader2, CheckCircle, Upload } from 'lucide-react'
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -77,6 +77,10 @@ export default function CreatorAdmin() {
   const [form,     setForm]     = useState(EMPTY_FORM)
   const [saving,   setSaving]   = useState(false)
   const [deleting, setDeleting] = useState(null)
+  const [showBulk, setShowBulk] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkResult, setBulkResult] = useState(null)
 
   function notify(msg, ok = true) {
     setToast({ msg, ok })
@@ -96,6 +100,42 @@ export default function CreatorAdmin() {
   }
 
   useEffect(() => { load() }, [])
+
+  async function handleBulkImport(e) {
+    e.preventDefault()
+    const usernames = bulkText
+      .split(/[\n,]+/)
+      .map(u => u.trim().replace(/^@/, ''))
+      .filter(Boolean)
+
+    if (usernames.length === 0) {
+      notify('Enter at least one username.', false)
+      return
+    }
+
+    setBulkLoading(true)
+    setBulkResult(null)
+    try {
+      const res = await fetch('/api/dashboard/import-tiktok', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernames }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || res.statusText)
+      setBulkResult(data)
+      if (data.imported.length > 0) {
+        notify(`Imported ${data.imported.length} creator${data.imported.length !== 1 ? 's' : ''}.`)
+        load()
+      } else if (data.skipped.length > 0 && data.errors.length === 0) {
+        notify('All usernames already exist.', false)
+      }
+    } catch (err) {
+      notify(err.message, false)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   async function handleAdd(e) {
     e.preventDefault()
@@ -158,16 +198,64 @@ export default function CreatorAdmin() {
             <span className="text-slate-700">|</span>
             <span className="text-white font-semibold text-sm">Creator Admin</span>
           </div>
-          <button
-            onClick={() => setShowForm(f => !f)}
-            className="flex items-center gap-1.5 bg-[#4f74f3] hover:bg-[#3d5fd4] text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <Plus size={15} /> Add Creator
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setShowBulk(b => !b); setShowForm(false); setBulkResult(null) }}
+              className="flex items-center gap-1.5 bg-[#1a1e28] hover:bg-[#222736] text-slate-300 text-sm font-semibold px-3 py-1.5 rounded-lg border border-[#222736] transition-colors"
+            >
+              <Upload size={15} /> Bulk Import
+            </button>
+            <button
+              onClick={() => { setShowForm(f => !f); setShowBulk(false) }}
+              className="flex items-center gap-1.5 bg-[#4f74f3] hover:bg-[#3d5fd4] text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Plus size={15} /> Add Creator
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+
+        {/* Bulk import form */}
+        {showBulk && (
+          <form onSubmit={handleBulkImport} className="bg-[#13161d] border border-pink-500/30 rounded-xl p-6 mb-8 space-y-4">
+            <div>
+              <h3 className="text-white font-bold text-base">Bulk Import TikTokers</h3>
+              <p className="text-slate-500 text-xs mt-1">Paste usernames — one per line or comma-separated. No @ needed. We'll auto-resolve their profile, avatar, and follower count.</p>
+            </div>
+            <textarea
+              value={bulkText}
+              onChange={e => setBulkText(e.target.value)}
+              rows={6}
+              placeholder={"ninja\npokimane\ncharlidamelio\naddison.rae"}
+              className="w-full bg-[#0d0f14] border border-[#222736] rounded-lg px-3 py-2 text-white text-sm placeholder-slate-700 focus:outline-none focus:border-pink-500/50 transition-colors font-mono"
+            />
+            <div className="flex items-center gap-3">
+              <button type="submit" disabled={bulkLoading}
+                className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+                {bulkLoading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                {bulkLoading ? 'Importing...' : 'Import'}
+              </button>
+              <button type="button" onClick={() => { setShowBulk(false); setBulkResult(null) }}
+                className="text-slate-400 hover:text-white text-sm transition-colors">Cancel</button>
+            </div>
+
+            {bulkResult && (
+              <div className="mt-2 space-y-1 text-xs">
+                {bulkResult.imported.length > 0 && (
+                  <div className="text-emerald-400">✓ Imported: {bulkResult.imported.join(', ')}</div>
+                )}
+                {bulkResult.skipped.length > 0 && (
+                  <div className="text-slate-500">— Already exists: {bulkResult.skipped.join(', ')}</div>
+                )}
+                {bulkResult.errors.map(e => (
+                  <div key={e.handle} className="text-red-400">✗ @{e.handle}: {e.error}</div>
+                ))}
+              </div>
+            )}
+          </form>
+        )}
 
         {/* Add form */}
         {showForm && (
