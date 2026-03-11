@@ -279,6 +279,8 @@ export default function Dashboard() {
   const [tab, setTab]         = useState('feed')
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState(null)
+  const [clearing, setClearing] = useState(false)
+  const [clearResult, setClearResult] = useState(null)
 
   async function scanAll(opts) {
     setScanning(true)
@@ -296,6 +298,21 @@ export default function Dashboard() {
       // silent
     } finally {
       setScanning(false)
+    }
+  }
+
+  async function clearPending() {
+    setClearing(true)
+    setClearResult(null)
+    try {
+      const res  = await fetch('/api/dashboard/clear-pending', { method: 'POST' })
+      const data = await res.json()
+      setClearResult(data)
+      setTimeout(() => setClearResult(null), 4000)
+    } catch {
+      // silent
+    } finally {
+      setClearing(false)
     }
   }
 
@@ -319,11 +336,25 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {clearResult && (
+              <span className="text-xs text-blue-400 font-semibold">
+                {(clearResult.reset_transcription + clearResult.reset_analysis) > 0
+                  ? `Reset ${clearResult.reset_transcription + clearResult.reset_analysis} stuck job(s)`
+                  : 'No stuck jobs'}
+              </span>
+            )}
             {scanResult && (
               <span className="text-xs text-emerald-400 font-semibold">
                 {scanResult.new_videos > 0 ? `+${scanResult.new_videos} new videos` : 'Up to date'}
               </span>
             )}
+            <button
+              onClick={clearPending}
+              disabled={clearing}
+              className="bg-[#1a1e28] hover:bg-[#222736] text-slate-400 hover:text-slate-200 text-sm font-semibold px-3 py-1.5 rounded-lg border border-[#222736] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {clearing ? 'Clearing…' : 'Clear Pending'}
+            </button>
             <ScanMenu
               onScan={scanAll}
               scanning={scanning}
