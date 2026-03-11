@@ -30,8 +30,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const { name, handle, platform, platform_user_id, channel_url, alert_email } = body
 
-    if (!name || !handle || !platform_user_id) {
-      return res.status(400).json({ error: 'name, handle, and platform_user_id are required' })
+    if (!name || !handle) {
+      return res.status(400).json({ error: 'name and handle are required' })
     }
 
     const { data, error } = await supabase

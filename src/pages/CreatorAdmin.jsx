@@ -127,8 +127,8 @@ export default function CreatorAdmin() {
 
   async function handleAdd(e) {
     e.preventDefault()
-    if (!form.name || !form.handle || !form.platform_user_id) {
-      notify('Name, handle, and platform ID are required.', false)
+    if (!form.name || !form.handle) {
+      notify('Name and handle are required.', false)
       return
     }
     setSaving(true)
@@ -264,7 +264,7 @@ export default function CreatorAdmin() {
                   {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
-              <Field label="Platform User ID *" value={form.platform_user_id}
+              <Field label="Platform User ID" value={form.platform_user_id}
                 onChange={v => setForm(f => ({ ...f, platform_user_id: v }))}
                 placeholder="secUid / numeric Twitch ID" />
               <Field label="Channel URL" value={form.channel_url}
