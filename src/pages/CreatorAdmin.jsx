@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Loader2, CheckCircle, Upload } from 'lucide-react'
-
-const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-const headers = {
-  apikey:        SUPABASE_ANON,
-  Authorization: `Bearer ${SUPABASE_ANON}`,
-  'Content-Type': 'application/json',
-  Prefer:        'return=representation',
-}
-
-async function dbGet(path) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers })
-  if (!res.ok) throw new Error(`DB ${res.status}`)
-  return res.json()
-}
+import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Loader2, CheckCircle, Upload, RefreshCw } from 'lucide-react'
 
 async function apiWrite(method, body) {
   const res = await fetch('/api/dashboard/creators-write', {
@@ -65,6 +49,7 @@ export default function CreatorAdmin() {
   const [form,     setForm]     = useState(EMPTY_FORM)
   const [saving,   setSaving]   = useState(false)
   const [deleting, setDeleting] = useState(null)
+  const [scanning, setScanning] = useState(null)
   const [showBulk, setShowBulk] = useState(false)
   const [bulkText, setBulkText] = useState('')
   const [bulkLoading, setBulkLoading] = useState(false)
@@ -77,8 +62,11 @@ export default function CreatorAdmin() {
 
   async function load() {
     setLoading(true)
+    setError(null)
     try {
-      const data = await dbGet('creators?select=*&order=created_at.desc')
+      const res = await fetch('/api/dashboard/creators-write')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || res.statusText)
       setCreators(data)
     } catch (e) {
       setError(e.message)
@@ -152,6 +140,25 @@ export default function CreatorAdmin() {
       notify(creator.is_active ? 'Creator paused.' : 'Creator activated.')
     } catch (e) {
       notify(e.message, false)
+    }
+  }
+
+  async function handleScan(creator) {
+    setScanning(creator.id)
+    try {
+      const res = await fetch('/api/dashboard/scan-creator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creatorId: creator.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || res.statusText)
+      notify(data.new_videos > 0 ? `Fetched ${data.new_videos} new video${data.new_videos !== 1 ? 's' : ''}.` : 'Up to date — no new videos.')
+      load()
+    } catch (e) {
+      notify(e.message, false)
+    } finally {
+      setScanning(null)
     }
   }
 
@@ -334,13 +341,23 @@ export default function CreatorAdmin() {
                         </button>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() => handleDelete(c)}
-                          disabled={deleting === c.id}
-                          className="text-slate-600 hover:text-red-400 transition-colors disabled:opacity-40"
-                        >
-                          {deleting === c.id ? <Loader2 size={15} className="animate-spin"/> : <Trash2 size={15}/>}
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => handleScan(c)}
+                            disabled={scanning === c.id}
+                            title="Scan for new videos"
+                            className="text-slate-600 hover:text-blue-400 transition-colors disabled:opacity-40"
+                          >
+                            {scanning === c.id ? <Loader2 size={15} className="animate-spin"/> : <RefreshCw size={15}/>}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(c)}
+                            disabled={deleting === c.id}
+                            className="text-slate-600 hover:text-red-400 transition-colors disabled:opacity-40"
+                          >
+                            {deleting === c.id ? <Loader2 size={15} className="animate-spin"/> : <Trash2 size={15}/>}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -15,7 +15,7 @@ function cors(res, req) {
   const origin = req.headers.origin || '*'
   res.setHeader('Access-Control-Allow-Origin', origin)
   res.setHeader('Vary', 'Origin')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, PATCH, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 }
 
@@ -25,6 +25,17 @@ module.exports = async function handler(req, res) {
 
   const supabase = getSupabase()
   const body = req.body ?? {}
+
+  // ── GET: list all creators ────────────────────────────────────────────────
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('creators')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) return res.status(500).json({ error: error.message })
+    return res.status(200).json(data)
+  }
 
   // ── POST: insert new creator ──────────────────────────────────────────────
   if (req.method === 'POST') {
