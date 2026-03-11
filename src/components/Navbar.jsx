@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'Pricing', href: '#pricing' },
   { label: 'Reviews', href: '#reviews' },
+  { label: 'Dashboard', href: '/dashboard' },
 ]
 
 export default function Navbar() {
@@ -40,7 +41,7 @@ export default function Navbar() {
         {/* Desktop CTA buttons */}
         <div className="hidden md:flex items-center gap-3">
           <a
-            href="#"
+            href="/dashboard"
             className="text-sm font-medium text-[#94a3b8] hover:text-[#e2e8f0] px-4 py-2 rounded-lg border border-[#222736] hover:border-[#394057] transition-colors duration-150"
           >
             Sign In
@@ -88,7 +89,7 @@ export default function Navbar() {
               ))}
               <div className="h-px bg-[#222736] my-2" />
               <a
-                href="#"
+                href="/dashboard"
                 onClick={() => setMobileOpen(false)}
                 className="text-sm font-medium text-[#94a3b8] hover:text-[#e2e8f0] py-2.5 transition-colors"
               >
