@@ -18,27 +18,15 @@ async function dbGet(path) {
   return res.json()
 }
 
-async function dbPost(table, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: 'POST', headers, body: JSON.stringify(body),
+async function apiWrite(method, body) {
+  const res = await fetch('/api/dashboard/creators-write', {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   })
-  if (!res.ok) { const t = await res.text(); throw new Error(t) }
-  return res.json()
-}
-
-async function dbPatch(table, id, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: 'PATCH', headers, body: JSON.stringify(body),
-  })
-  if (!res.ok) { const t = await res.text(); throw new Error(t) }
-  return res.json()
-}
-
-async function dbDelete(table, id) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: 'DELETE', headers,
-  })
-  if (!res.ok) { const t = await res.text(); throw new Error(t) }
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || res.statusText)
+  return data
 }
 
 const PLATFORMS = ['tiktok', 'twitch', 'youtube']
@@ -145,7 +133,7 @@ export default function CreatorAdmin() {
     }
     setSaving(true)
     try {
-      await dbPost('creators', { ...form, is_active: true })
+      await apiWrite('POST', { ...form, is_active: true })
       setForm(EMPTY_FORM)
       setShowForm(false)
       notify('Creator added.')
@@ -159,7 +147,7 @@ export default function CreatorAdmin() {
 
   async function toggleActive(creator) {
     try {
-      await dbPatch('creators', creator.id, { is_active: !creator.is_active })
+      await apiWrite('PATCH', { id: creator.id, is_active: !creator.is_active })
       setCreators(prev => prev.map(c => c.id === creator.id ? { ...c, is_active: !c.is_active } : c))
       notify(creator.is_active ? 'Creator paused.' : 'Creator activated.')
     } catch (e) {
@@ -171,7 +159,7 @@ export default function CreatorAdmin() {
     if (!window.confirm(`Delete @${creator.handle}? This removes all their videos and mentions.`)) return
     setDeleting(creator.id)
     try {
-      await dbDelete('creators', creator.id)
+      await apiWrite('DELETE', { id: creator.id })
       setCreators(prev => prev.filter(c => c.id !== creator.id))
       notify('Creator deleted.')
     } catch (e) {
