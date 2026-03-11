@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { TrendingUp, Users, Zap, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
+import { TrendingUp, Users, Zap, AlertCircle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -275,7 +275,24 @@ function Opportunities() {
 
 // ─── Dashboard shell ─────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const [tab, setTab] = useState('feed')
+  const [tab, setTab]         = useState('feed')
+  const [scanning, setScanning] = useState(false)
+  const [scanResult, setScanResult] = useState(null)
+
+  async function scanAll() {
+    setScanning(true)
+    setScanResult(null)
+    try {
+      const res  = await fetch('/api/dashboard/scan-all', { method: 'POST' })
+      const data = await res.json()
+      setScanResult(data)
+      setTimeout(() => setScanResult(null), 4000)
+    } catch {
+      // silent
+    } finally {
+      setScanning(false)
+    }
+  }
 
   const tabs = [
     { id: 'feed',  label: 'Deal Feed' },
@@ -296,10 +313,25 @@ export default function Dashboard() {
               <span className="text-white font-semibold text-sm">Signal Dashboard</span>
             </div>
           </div>
-          <Link to="/creators"
-            className="text-sm text-[#4f74f3] hover:text-[#7b9ef8] font-semibold transition-colors">
-            Manage Creators →
-          </Link>
+          <div className="flex items-center gap-3">
+            {scanResult && (
+              <span className="text-xs text-emerald-400 font-semibold">
+                {scanResult.new_videos > 0 ? `+${scanResult.new_videos} new videos` : 'Up to date'}
+              </span>
+            )}
+            <button
+              onClick={scanAll}
+              disabled={scanning}
+              className="flex items-center gap-1.5 bg-[#1a1e28] hover:bg-[#222736] disabled:opacity-50 text-slate-300 text-sm font-semibold px-3 py-1.5 rounded-lg border border-[#222736] transition-colors"
+            >
+              {scanning ? <Loader2 size={14} className="animate-spin"/> : <RefreshCw size={14}/>}
+              {scanning ? 'Scanning…' : 'Scan All'}
+            </button>
+            <Link to="/creators"
+              className="text-sm text-[#4f74f3] hover:text-[#7b9ef8] font-semibold transition-colors">
+              Manage Creators →
+            </Link>
+          </div>
         </div>
 
         {/* Tabs */}
