@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
 
   const supabase = getSupabase()
   const errors   = []
-  const summary  = { found: 0, transcribed: 0, skipped: 0, analyzed: 0, mentions_found: 0, errors }
+  const summary  = { found: 0, transcribed: 0, skipped: 0, analyzed: 0, mentions_found: 0, first_error: null, errors }
 
   // ── Step 1: Transcribe pending videos ─────────────────────────────────────
   const { data: toTranscribe, error: fetchErr } = await supabase
@@ -98,6 +98,7 @@ module.exports = async function handler(req, res) {
         })
         .eq('id', video.id)
 
+      if (!summary.first_error) summary.first_error = err.message
       errors.push({ stage: 'transcribe', video_id: video.id, error: err.message })
     }
   }
@@ -173,6 +174,7 @@ module.exports = async function handler(req, res) {
         .update({ analysis_status: 'failed', error_message: err.message })
         .eq('id', video.id)
 
+      if (!summary.first_error) summary.first_error = err.message
       errors.push({ stage: 'analyze', video_id: video.id, error: err.message })
     }
   }

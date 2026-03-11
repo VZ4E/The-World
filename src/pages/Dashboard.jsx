@@ -370,7 +370,7 @@ export default function Dashboard() {
                     : runResult.transcribed > 0 || runResult.analyzed > 0
                       ? `Transcribed ${runResult.transcribed}/${runResult.found} · analyzed ${runResult.analyzed} · ${runResult.mentions_found} mention(s)${runResult.errors?.length > 0 ? ` · ${runResult.errors.length} failed` : ''}`
                       : runResult.errors?.length > 0
-                        ? `Found ${runResult.found} videos · ${runResult.errors.length} failed (check API keys)`
+                        ? `${runResult.errors.length}/${runResult.found} failed — ${runResult.first_error ?? 'unknown error'}`
                         : `Found ${runResult.found} · ${runResult.skipped ?? 0} skipped (no URL)`}
               </span>
             )}
