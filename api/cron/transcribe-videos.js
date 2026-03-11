@@ -42,7 +42,6 @@ module.exports = async function handler(req, res) {
     .select('id, video_url, retry_count')
     .eq('transcription_status', 'pending')
     .not('video_url', 'is', null)
-    .or(`retry_count.is.null,retry_count.lt.${MAX_RETRIES}`)
     .order('published_at', { ascending: false })
     .limit(BATCH_SIZE)
 

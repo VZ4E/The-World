@@ -290,10 +290,11 @@ export default function Dashboard() {
     try {
       const res  = await fetch('/api/dashboard/run-pipeline', { method: 'POST' })
       const data = await res.json()
-      setRunResult(data)
-      setTimeout(() => setRunResult(null), 6000)
-    } catch {
-      // silent
+      setRunResult(res.ok ? data : { _httpError: data.error || `HTTP ${res.status}` })
+      setTimeout(() => setRunResult(null), 8000)
+    } catch (err) {
+      setRunResult({ _httpError: err.message || 'Network error' })
+      setTimeout(() => setRunResult(null), 8000)
     } finally {
       setRunning(false)
     }
@@ -361,10 +362,14 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             {runResult && (
-              <span className="text-xs text-purple-400 font-semibold">
-                {runResult.transcribed > 0 || runResult.analyzed > 0
-                  ? `Transcribed ${runResult.transcribed}, found ${runResult.mentions_found} mention(s)`
-                  : 'Nothing to process'}
+              <span className={`text-xs font-semibold ${runResult._httpError || runResult.errors?.length > 0 ? 'text-red-400' : 'text-purple-400'}`}>
+                {runResult._httpError
+                  ? `Error: ${runResult._httpError}`
+                  : runResult.transcribed > 0 || runResult.analyzed > 0
+                    ? `Transcribed ${runResult.transcribed}, found ${runResult.mentions_found} mention(s)${runResult.errors?.length > 0 ? ` (${runResult.errors.length} failed)` : ''}`
+                    : runResult.errors?.length > 0
+                      ? `${runResult.errors.length} error(s) — check API keys`
+                      : 'No pending videos'}
               </span>
             )}
             {clearResult && (
