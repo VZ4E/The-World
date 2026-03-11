@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' })
 
-  const { mode = 'count', count = 7, days = 7 } = req.body ?? {}
+  const { mode = 'count', count = 7, days = 7, force = false } = req.body ?? {}
   const supabase = getSupabase()
 
   const { data: creators, error: creatorsErr } = await supabase
@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
 
   for (const creator of creators) {
     try {
-      newVideosTotal += await scanCreator(supabase, creator, { mode, count, days })
+      newVideosTotal += await scanCreator(supabase, creator, { mode, count, days, force })
     } catch (err) {
       errors.push({ handle: creator.handle, error: err.message })
     }

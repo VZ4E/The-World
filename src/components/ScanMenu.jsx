@@ -47,7 +47,7 @@ export default function ScanMenu({ onScan, scanning = false, label = 'Scan', cla
             <p className="text-slate-500 text-[10px] font-semibold uppercase tracking-widest mb-2">Past Videos</p>
             <div className="flex gap-1.5 mb-3">
               {COUNT_OPTIONS.map(n => (
-                <button key={n} onClick={() => pick({ mode: 'count', count: n })}
+                <button key={n} onClick={() => pick({ mode: 'count', count: n, force: true })}
                   className="flex-1 py-1.5 rounded-lg bg-[#1a1e28] hover:bg-[#4f74f3] text-slate-300 hover:text-white text-xs font-semibold transition-colors">
                   {n}
                 </button>

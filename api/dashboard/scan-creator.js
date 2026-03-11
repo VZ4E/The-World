@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' })
 
-  const { creatorId, mode = 'count', count = 7, days = 7 } = req.body ?? {}
+  const { creatorId, mode = 'count', count = 7, days = 7, force = false } = req.body ?? {}
   if (!creatorId) return res.status(400).json({ error: 'creatorId is required' })
 
   const supabase = getSupabase()
@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
   if (creator.platform !== 'tiktok') return res.status(400).json({ error: `Scanning not supported for platform: ${creator.platform}` })
 
   try {
-    const newVideos = await scanCreator(supabase, creator, { mode, count, days })
+    const newVideos = await scanCreator(supabase, creator, { mode, count, days, force })
     return res.status(200).json({ new_videos: newVideos })
   } catch (err) {
     return res.status(500).json({ error: err.message })

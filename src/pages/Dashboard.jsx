@@ -377,7 +377,7 @@ export default function Dashboard() {
             )}
             {scanResult && (
               <span className="text-xs text-emerald-400 font-semibold">
-                {scanResult.new_videos > 0 ? `+${scanResult.new_videos} new videos` : 'Up to date'}
+                {scanResult.new_videos > 0 ? `Queued ${scanResult.new_videos} video${scanResult.new_videos !== 1 ? 's' : ''}` : 'No new videos'}
               </span>
             )}
             <button
