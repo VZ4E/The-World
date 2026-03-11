@@ -322,10 +322,17 @@ export default function Dashboard() {
     setClearing(true)
     setClearResult(null)
     try {
-      const res  = await fetch('/api/dashboard/clear-pending', { method: 'POST' })
-      const data = await res.json()
-      setClearResult(data)
-      setTimeout(() => setClearResult(null), 4000)
+      const [clearRes, scanRes] = await Promise.all([
+        fetch('/api/dashboard/clear-pending', { method: 'POST' }),
+        fetch('/api/dashboard/scan-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'count', count: 7 }),
+        }),
+      ])
+      const [clearData, scanData] = await Promise.all([clearRes.json(), scanRes.json()])
+      setClearResult({ ...clearData, new_videos: scanData.new_videos ?? 0 })
+      setTimeout(() => setClearResult(null), 5000)
     } catch {
       // silent
     } finally {
@@ -364,7 +371,8 @@ export default function Dashboard() {
               <span className="text-xs text-blue-400 font-semibold">
                 {(clearResult.reset_transcription + clearResult.reset_analysis) > 0
                   ? `Reset ${clearResult.reset_transcription + clearResult.reset_analysis} job(s)`
-                  : 'Nothing to reset'}
+                  : 'Queue clear'}
+                {clearResult.new_videos > 0 && ` · +${clearResult.new_videos} new videos`}
               </span>
             )}
             {scanResult && (
