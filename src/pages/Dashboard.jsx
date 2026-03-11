@@ -281,6 +281,23 @@ export default function Dashboard() {
   const [scanResult, setScanResult] = useState(null)
   const [clearing, setClearing] = useState(false)
   const [clearResult, setClearResult] = useState(null)
+  const [running, setRunning] = useState(false)
+  const [runResult, setRunResult] = useState(null)
+
+  async function runPipeline() {
+    setRunning(true)
+    setRunResult(null)
+    try {
+      const res  = await fetch('/api/dashboard/run-pipeline', { method: 'POST' })
+      const data = await res.json()
+      setRunResult(data)
+      setTimeout(() => setRunResult(null), 6000)
+    } catch {
+      // silent
+    } finally {
+      setRunning(false)
+    }
+  }
 
   async function scanAll(opts) {
     setScanning(true)
@@ -336,11 +353,18 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {runResult && (
+              <span className="text-xs text-purple-400 font-semibold">
+                {runResult.transcribed > 0 || runResult.analyzed > 0
+                  ? `Transcribed ${runResult.transcribed}, found ${runResult.mentions_found} mention(s)`
+                  : 'Nothing to process'}
+              </span>
+            )}
             {clearResult && (
               <span className="text-xs text-blue-400 font-semibold">
                 {(clearResult.reset_transcription + clearResult.reset_analysis) > 0
-                  ? `Reset ${clearResult.reset_transcription + clearResult.reset_analysis} stuck job(s)`
-                  : 'No stuck jobs'}
+                  ? `Reset ${clearResult.reset_transcription + clearResult.reset_analysis} job(s)`
+                  : 'Nothing to reset'}
               </span>
             )}
             {scanResult && (
@@ -348,6 +372,13 @@ export default function Dashboard() {
                 {scanResult.new_videos > 0 ? `+${scanResult.new_videos} new videos` : 'Up to date'}
               </span>
             )}
+            <button
+              onClick={runPipeline}
+              disabled={running}
+              className="bg-[#1a1e28] hover:bg-[#222736] text-purple-400 hover:text-purple-300 text-sm font-semibold px-3 py-1.5 rounded-lg border border-[#222736] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {running ? 'Running…' : 'Run Pipeline'}
+            </button>
             <button
               onClick={clearPending}
               disabled={clearing}

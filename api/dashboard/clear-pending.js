@@ -1,8 +1,9 @@
 /**
  * POST /api/dashboard/clear-pending
  *
- * Resets any videos stuck in 'processing' state back to 'pending'
- * so the next cron run picks them up again.
+ * Resets stuck/failed videos so the pipeline can retry them:
+ *   - 'processing' → 'pending'  (stuck mid-run)
+ *   - 'failed'     → 'pending'  (exhausted retries — reset retry_count too)
  *
  * Returns: { reset_transcription: number, reset_analysis: number }
  */
@@ -21,26 +22,31 @@ module.exports = async function handler(req, res) {
 
   const supabase = getSupabase()
 
-  const [transcriptionResult, analysisResult] = await Promise.all([
+  // Reset stuck transcription jobs (processing or failed)
+  const [tProcessing, tFailed, aProcessing, aFailed] = await Promise.all([
     supabase
       .from('videos')
       .update({ transcription_status: 'pending' })
       .eq('transcription_status', 'processing'),
     supabase
       .from('videos')
+      .update({ transcription_status: 'pending', retry_count: 0, error_message: null })
+      .eq('transcription_status', 'failed'),
+    supabase
+      .from('videos')
       .update({ analysis_status: 'pending' })
       .eq('analysis_status', 'processing'),
+    supabase
+      .from('videos')
+      .update({ analysis_status: 'pending', error_message: null })
+      .eq('analysis_status', 'failed'),
   ])
 
-  if (transcriptionResult.error) {
-    return res.status(500).json({ error: transcriptionResult.error.message })
-  }
-  if (analysisResult.error) {
-    return res.status(500).json({ error: analysisResult.error.message })
-  }
+  const firstError = tProcessing.error || tFailed.error || aProcessing.error || aFailed.error
+  if (firstError) return res.status(500).json({ error: firstError.message })
 
   return res.status(200).json({
-    reset_transcription: transcriptionResult.count ?? 0,
-    reset_analysis:      analysisResult.count      ?? 0,
+    reset_transcription: (tProcessing.count ?? 0) + (tFailed.count ?? 0),
+    reset_analysis:      (aProcessing.count ?? 0) + (aFailed.count ?? 0),
   })
 }
