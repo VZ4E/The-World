@@ -7,7 +7,7 @@
  * Processes up to 10 videos per call to stay within Vercel's timeout.
  * Click again to process the next batch.
  *
- * Returns: { transcribed: number, analyzed: number, mentions_found: number, errors: [...] }
+ * Returns: { found, transcribed, skipped, analyzed, mentions_found, errors }
  */
 
 const { getSupabase }    = require('../../lib/supabase')
@@ -18,6 +18,15 @@ const BATCH_SIZE   = 10
 const MAX_RETRIES  = 3
 const VALID_MENTION_TYPES = new Set(['sponsored', 'organic', 'unknown'])
 const VALID_SENTIMENTS    = new Set(['positive', 'negative', 'neutral'])
+
+/** Build a TikTok share URL from creator handle + video ID */
+function buildTikTokUrl(video) {
+  if (video.platform === 'tiktok' && video.platform_video_id && video.creators?.handle) {
+    const handle = video.creators.handle.replace(/^@/, '')
+    return `https://www.tiktok.com/@${handle}/video/${video.platform_video_id}`
+  }
+  return null
+}
 
 module.exports = async function handler(req, res) {
   const origin = req.headers.origin || '*'
@@ -31,29 +40,49 @@ module.exports = async function handler(req, res) {
 
   const supabase = getSupabase()
   const errors   = []
-  const summary  = { transcribed: 0, analyzed: 0, mentions_found: 0, errors }
+  const summary  = { found: 0, transcribed: 0, skipped: 0, analyzed: 0, mentions_found: 0, errors }
 
   // ── Step 1: Transcribe pending videos ─────────────────────────────────────
-  const { data: toTranscribe } = await supabase
+  const { data: toTranscribe, error: fetchErr } = await supabase
     .from('videos')
-    .select('id, video_url, retry_count')
+    .select('id, video_url, retry_count, platform, platform_video_id, creators(handle)')
     .eq('transcription_status', 'pending')
-    .not('video_url', 'is', null)
     .order('published_at', { ascending: false })
     .limit(BATCH_SIZE)
 
+  if (fetchErr) return res.status(500).json({ error: fetchErr.message })
+
+  summary.found = (toTranscribe ?? []).length
+
   for (const video of toTranscribe ?? []) {
+    // Resolve URL — use stored URL or construct from video ID + handle
+    let url = video.video_url
+    if (!url) {
+      url = buildTikTokUrl(video)
+      if (url) {
+        // Save constructed URL so future runs don't need to rebuild it
+        await supabase.from('videos').update({ video_url: url }).eq('id', video.id)
+      }
+    }
+
+    // Still no URL — can't transcribe, mark skipped
+    if (!url) {
+      await supabase.from('videos').update({ transcription_status: 'skipped' }).eq('id', video.id)
+      summary.skipped++
+      continue
+    }
+
     try {
-      const { text, captions } = await transcribeVideo(video.video_url)
+      const { text, captions } = await transcribeVideo(url)
 
       await supabase
         .from('videos')
         .update({
-          transcription_status: 'completed',
-          transcript_text:      text,
+          transcription_status:  'completed',
+          transcript_text:       text,
           transcript_words_json: captions,
-          transcribed_at:       new Date().toISOString(),
-          error_message:        null,
+          transcribed_at:        new Date().toISOString(),
+          error_message:         null,
         })
         .eq('id', video.id)
 

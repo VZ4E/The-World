@@ -365,11 +365,13 @@ export default function Dashboard() {
               <span className={`text-xs font-semibold ${runResult._httpError || runResult.errors?.length > 0 ? 'text-red-400' : 'text-purple-400'}`}>
                 {runResult._httpError
                   ? `Error: ${runResult._httpError}`
-                  : runResult.transcribed > 0 || runResult.analyzed > 0
-                    ? `Transcribed ${runResult.transcribed}, found ${runResult.mentions_found} mention(s)${runResult.errors?.length > 0 ? ` (${runResult.errors.length} failed)` : ''}`
-                    : runResult.errors?.length > 0
-                      ? `${runResult.errors.length} error(s) — check API keys`
-                      : 'No pending videos'}
+                  : runResult.found === 0
+                    ? 'No pending videos found'
+                    : runResult.transcribed > 0 || runResult.analyzed > 0
+                      ? `Transcribed ${runResult.transcribed}/${runResult.found} · analyzed ${runResult.analyzed} · ${runResult.mentions_found} mention(s)${runResult.errors?.length > 0 ? ` · ${runResult.errors.length} failed` : ''}`
+                      : runResult.errors?.length > 0
+                        ? `Found ${runResult.found} videos · ${runResult.errors.length} failed (check API keys)`
+                        : `Found ${runResult.found} · ${runResult.skipped ?? 0} skipped (no URL)`}
               </span>
             )}
             {clearResult && (
