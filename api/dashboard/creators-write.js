@@ -47,7 +47,15 @@ module.exports = async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('creators')
-      .insert({ name, handle, platform: platform || 'tiktok', platform_user_id, channel_url, alert_email, is_active: true })
+      .insert({
+        name,
+        handle,
+        platform:         platform         || 'tiktok',
+        platform_user_id: platform_user_id || null,
+        channel_url:      channel_url      || null,
+        alert_email:      alert_email      || null,
+        is_active: true,
+      })
       .select()
       .single()
 

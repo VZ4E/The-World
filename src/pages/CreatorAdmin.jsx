@@ -14,7 +14,7 @@ async function apiWrite(method, body) {
   return data
 }
 
-const PLATFORMS = ['tiktok', 'twitch', 'youtube']
+const PLATFORMS = ['tiktok', 'twitch']
 
 function PlatformBadge({ platform }) {
   const cfg = {
