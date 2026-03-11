@@ -1,16 +1,13 @@
 /**
  * POST /api/dashboard/scan-all
  *
- * Trigger a video fetch for all active creators.
+ * Trigger a video fetch for all active TikTok creators.
+ * Body: { mode: 'count'|'days', count?: number, days?: number }
  * Returns: { scanned: number, new_videos: number, errors: [...] }
  */
 
 const { getSupabase } = require('../../lib/supabase')
-const tiktokResearch  = require('../../lib/tiktok')
-const tiktokRapidApi  = require('../../lib/tiktok-rapidapi')
-
-const tiktok = process.env.RAPIDAPI_TIKTOK_KEY ? tiktokRapidApi : tiktokResearch
-const VIDEOS_PER_CREATOR = parseInt(process.env.VIDEOS_PER_CREATOR || '7', 10)
+const { scanCreator } = require('../../lib/scan-videos')
 
 module.exports = async function handler(req, res) {
   const origin = req.headers.origin || '*'
@@ -22,6 +19,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' })
 
+  const { mode = 'count', count = 7, days = 7 } = req.body ?? {}
   const supabase = getSupabase()
 
   const { data: creators, error: creatorsErr } = await supabase
@@ -37,27 +35,7 @@ module.exports = async function handler(req, res) {
 
   for (const creator of creators) {
     try {
-      const fetched = await tiktok.fetchRecentVideos(creator, VIDEOS_PER_CREATOR)
-      if (fetched.length === 0) {
-        await supabase.from('creators').update({ last_fetched_at: new Date().toISOString() }).eq('id', creator.id)
-        continue
-      }
-
-      const fetchedIds = fetched.map(v => v.platform_video_id)
-      const { data: existing } = await supabase
-        .from('videos').select('platform_video_id')
-        .eq('creator_id', creator.id).in('platform_video_id', fetchedIds)
-
-      const existingIds = new Set((existing ?? []).map(v => v.platform_video_id))
-      const newVideos   = fetched.filter(v => !existingIds.has(v.platform_video_id))
-
-      if (newVideos.length > 0) {
-        const { error: insertErr } = await supabase.from('videos').insert(newVideos)
-        if (insertErr) throw new Error(insertErr.message)
-        newVideosTotal += newVideos.length
-      }
-
-      await supabase.from('creators').update({ last_fetched_at: new Date().toISOString() }).eq('id', creator.id)
+      newVideosTotal += await scanCreator(supabase, creator, { mode, count, days })
     } catch (err) {
       errors.push({ handle: creator.handle, error: err.message })
     }

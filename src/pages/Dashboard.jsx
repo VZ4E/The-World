@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { TrendingUp, Users, Zap, AlertCircle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react'
+import ScanMenu from '../components/ScanMenu'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -279,11 +280,15 @@ export default function Dashboard() {
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState(null)
 
-  async function scanAll() {
+  async function scanAll(opts) {
     setScanning(true)
     setScanResult(null)
     try {
-      const res  = await fetch('/api/dashboard/scan-all', { method: 'POST' })
+      const res  = await fetch('/api/dashboard/scan-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts),
+      })
       const data = await res.json()
       setScanResult(data)
       setTimeout(() => setScanResult(null), 4000)
@@ -319,14 +324,12 @@ export default function Dashboard() {
                 {scanResult.new_videos > 0 ? `+${scanResult.new_videos} new videos` : 'Up to date'}
               </span>
             )}
-            <button
-              onClick={scanAll}
-              disabled={scanning}
-              className="flex items-center gap-1.5 bg-[#1a1e28] hover:bg-[#222736] disabled:opacity-50 text-slate-300 text-sm font-semibold px-3 py-1.5 rounded-lg border border-[#222736] transition-colors"
-            >
-              {scanning ? <Loader2 size={14} className="animate-spin"/> : <RefreshCw size={14}/>}
-              {scanning ? 'Scanning…' : 'Scan All'}
-            </button>
+            <ScanMenu
+              onScan={scanAll}
+              scanning={scanning}
+              label="Scan All"
+              className="bg-[#1a1e28] hover:bg-[#222736] text-slate-300 text-sm font-semibold px-3 py-1.5 rounded-lg border border-[#222736]"
+            />
             <Link to="/creators"
               className="text-sm text-[#4f74f3] hover:text-[#7b9ef8] font-semibold transition-colors">
               Manage Creators →

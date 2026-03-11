@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Loader2, CheckCircle, Upload, RefreshCw } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Loader2, CheckCircle, Upload } from 'lucide-react'
+import ScanMenu from '../components/ScanMenu'
 
 async function apiWrite(method, body) {
   const res = await fetch('/api/dashboard/creators-write', {
@@ -143,13 +144,13 @@ export default function CreatorAdmin() {
     }
   }
 
-  async function handleScan(creator) {
+  async function handleScan(creator, opts) {
     setScanning(creator.id)
     try {
       const res = await fetch('/api/dashboard/scan-creator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creatorId: creator.id }),
+        body: JSON.stringify({ creatorId: creator.id, ...opts }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || res.statusText)
@@ -342,14 +343,12 @@ export default function CreatorAdmin() {
                       </td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={() => handleScan(c)}
-                            disabled={scanning === c.id}
-                            title="Scan for new videos"
-                            className="text-slate-600 hover:text-blue-400 transition-colors disabled:opacity-40"
-                          >
-                            {scanning === c.id ? <Loader2 size={15} className="animate-spin"/> : <RefreshCw size={15}/>}
-                          </button>
+                          <ScanMenu
+                            onScan={opts => handleScan(c, opts)}
+                            scanning={scanning === c.id}
+                            label=""
+                            className="text-slate-600 hover:text-blue-400 transition-colors"
+                          />
                           <button
                             onClick={() => handleDelete(c)}
                             disabled={deleting === c.id}
