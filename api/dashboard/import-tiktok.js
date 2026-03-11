@@ -36,12 +36,12 @@ async function resolveProfile(handle, apiKey) {
 
   const json = await res.json()
 
-  const user = json.data?.user || json.data?.userInfo?.user
+  const user = json.data?.user || json.data?.userInfo?.user || json.userInfo?.user
   if (!user?.secUid) {
     throw new Error(`Could not resolve secUid — ${JSON.stringify(json).slice(0, 200)}`)
   }
 
-  const stats = json.data?.stats || json.data?.userInfo?.stats || {}
+  const stats = json.data?.stats || json.data?.userInfo?.stats || json.userInfo?.stats || {}
 
   return {
     handle:             user.uniqueId || handle,
