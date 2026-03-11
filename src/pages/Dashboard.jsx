@@ -330,6 +330,10 @@ export default function Dashboard() {
               label="Scan All"
               className="bg-[#1a1e28] hover:bg-[#222736] text-slate-300 text-sm font-semibold px-3 py-1.5 rounded-lg border border-[#222736]"
             />
+            <Link to="/videos"
+              className="text-sm text-slate-400 hover:text-white font-semibold transition-colors">
+              Videos
+            </Link>
             <Link to="/creators"
               className="text-sm text-[#4f74f3] hover:text-[#7b9ef8] font-semibold transition-colors">
               Manage Creators →
